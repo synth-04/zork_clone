@@ -19,12 +19,25 @@ int main() {
         entrata->aggiungiAzione("Osserva la porta", "Una grande portone, pieno di sigilli arcani, blocca il tuo cammino. Inspiegabilmente, è aperto. Sembra che qualcuno sia già passato di qui.");
 
         Stanza* sala_spada = new Stanza("Sala della Spada", "Ti ritrovi in una piccola stanza, poco dopo il grande portone. Al centro, uno scheletro giace appoggiato ad un pilastro.", "sala della spada");
+        
+
+        Stanza* sala_boss = new Stanza("Sala Boss", "Il fuoco inonda questa immensa sala.", "una grande sala illuminata dal fuoco");
+
+        Stanza* sala_alchimia = new Stanza("Sala dell'Alchimia", "Questa stanza è piena di strani alambicchi e bottiglie. Molti sono rotti da tempo, altri ancora brillano fosforescenti nell'oscurità.", "sala dell'alchimia");
+
+
+        // ======= Creazione oggetti ======= //
+        // Oggetto(nome, tipo, descrizione_stanza, bonus_hp=0, bonus_mana=0, bonus_str=0, bonus_agi=0, bonus_mind=0, bonus_faith=0)
+
         sala_spada->aggiungiOggetto(new Oggetto
             ("Spada Arrugginita del Guerriero", "arma", 
                 "Una spada vecchia e arrugginita giace anch'essa accanto allo scheletro.", 
                 0,0,2,0,0,0));
 
-        Stanza* sala_boss = new Stanza("Sala Boss", "Il fuoco inonda questa immensa sala.", "una grande sala illuminata dal fuoco");
+        sala_alchimia->aggiungiOggetto(new Oggetto
+            ("Pozione di Cura Minore", "pozione", 
+                "Una piccola pozione rossa, con un liquido zampillante'.", 
+                20,0,0,0,0,0));
 
         // ======= Creazione nemici ======= //
         // Nemico(nome, descrizione, hp, tipo, potenza, danno, flag)
@@ -64,6 +77,8 @@ int main() {
 
         entrata->aggiungiUscita(sala_spada);
         sala_spada->aggiungiUscita(entrata);
+        sala_spada->aggiungiUscita(sala_alchimia);
+        sala_alchimia->aggiungiUscita(sala_spada);
         sala_spada->aggiungiUscita(sala_boss);
         sala_boss->aggiungiUscita(sala_spada);
 
