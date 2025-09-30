@@ -3,71 +3,79 @@
 
 #include <string>
 #include <vector>
+#include <utility>
+#include <memory>
 #include <iostream>
-#include <map>
-#include "Player.h"
+
 #include "Oggetto.h"
 #include "Nemico.h"
 #include "Evento.h"
 
 using namespace std;
 
-class Oggetto;
 class Player;
-class Nemico;
 
 class Stanza {
 private:
-    string nome;
-    string descrizione;
-    string descr_breve;
+    string nome_;
+    string descrizione_;
+    string descr_breve_;
+    vector<Stanza*> uscite_;
+    vector<pair<string,string>> azioni_; // {id, msg}
+    vector<unique_ptr<Oggetto>> oggetti_stanza_;
+    vector <Evento> eventi_;
     
-    Nemico* nemico = nullptr;
+    Nemico* nemico_ = nullptr;
 
 public:
 
-    vector<Stanza*> uscite;
-    vector<pair<string,string>> azioni;
-    vector<Oggetto*> oggetti_stanza;
-    vector <Evento> eventi;
+    
 
     // Costruttori
 
-    Stanza() : nome(""), descrizione(""), descr_breve("") {}
-    Stanza(const string& n, const string& d, const string& db)
-        : nome(n), descrizione(d), descr_breve(db) {}
+    Stanza(const string& nome, const string& descrizione, const string& descr_breve)
+        : nome_(nome), descrizione_(descrizione), descr_breve_(descr_breve) {}
 
     // Getter
 
-    string getNome() const { return nome; }
-    string getDescrizione() const { return descrizione; }
-    string getDescrizioneBreve() const { return descr_breve; }
-    Stanza* getStanzaAdiacente(const string& nome) const;
+    string getNome() const { return nome_; }
+    string getDescrizione() const { return descrizione_; }
+    string getDescrizioneBreve() const { return descr_breve_; }
+    const vector<Stanza*>& getUscite() const { return uscite_; }
 
-    // Setter
 
-    void setNome(const string& n) { nome = n; }
-    void setDescrizione(const string& d) { descrizione = d; }
-    void setDescrizioneBreve(const string& db) { descr_breve = db; }
 
     // Metodi
 
-    void scontro(Player& p);
-    void aggiungiScontro(Nemico* n);
-    void mostra(Player& p);
+    void aggiungiUscita(Stanza* s) { uscite_.push_back(s); }
+
+    void mostra() const;
     void mostraUscite() const;
-
-    void aggiungiUscita(Stanza* stanza);
-    void aggiungiOggetto(Oggetto* o);     
-    Oggetto* prendiOggetto(const string& nome);
-    void rimuoviOggetto(const string& nome);
-
-    void aggiungiAzione(const string& id, const string& msg);
     void mostraAzioni() const;
+
+    void aggiungiAzione(const string& id, const string& msg) { azioni_.emplace_back(id, msg); };
     pair<string,string> scegliAzione(int scelta) const;
 
-    string scegliUscita(int scelta) const;
-    void aggiungiEvento(const Evento& e);
+    void aggiungiOggetto(unique_ptr<Oggetto> o);
+    void aggiungiOggetto(Oggetto* o) { aggiungiOggetto(std::unique_ptr<Oggetto>(o)); } // overload per raw pointer
+    unique_ptr<Oggetto> prendiOggetto(const string& nome);
+    void rimuoviOggetto(const string& nome);
+
+    // Eventi
+
+    void aggiungiEvento(const Evento& e) { eventi_.push_back(e); }
+    void triggerEventi(Player& p);
+
+    // Scontro
+
+    void aggiungiScontro(Nemico* n) { nemico_ = n; }
+    bool haNemico() const { return nemico_ != nullptr; }
+    void scontro(Player& p);
+
+    // Quando il player entra
+    void entra(Player& p);
+
+     ~Stanza();
 };
 
 #endif

@@ -1,9 +1,8 @@
-#include <iostream>
+#ifndef EVENTO_H
+#define EVENTO_H
+
 #include <string>
-#include <vector>
 #include <functional>
-#include "Player.h"
-#include "Stanza.h"
 
 using namespace std;
 
@@ -12,37 +11,36 @@ class Stanza;
 
 class Evento {
 
-    // Attributi
+    // Attributi evento
 
-    private:
+    string nome_;
+    function<bool(Player&, Stanza&)> condizione_;
+    function<void(Player&, Stanza&)> azione_;
+    bool attivato_ = false;
 
-        string nome;
-        function <bool( Player&, Stanza&) > condizione ; // funzione che ritorna un bool
-        function <void (Player&, Stanza&) > effetto; // funzione che ritorna void
-        bool attivato = false; // per eventi che si attivano una sola volta
+public:
 
-    // Metodi
+    // Costruttore
 
-    public:
+    Evento(string nome,
+           function<bool(Player&, Stanza&)> cond,
+           function<void(Player&, Stanza&)> az)
+        : nome_(move(nome)), condizione_(move(cond)), azione_(move(az)) {}
 
-        // Costruttore
+    const string& getNome() const { return nome_; }
 
-        Evento (string n,
-                function <bool( Player&, Stanza&) > c,
-                function <void (Player&, Stanza&) > e,
-                bool a = false)
-            : nome(n), condizione(c), effetto(e), attivato(a) {};
+    // Controlla e attiva l'evento se la condizione è soddisfatta
 
-        // Metodi getter
-        string getNome () const { return nome;}
-        function <bool( Player&, Stanza&) > getCondizione () const { return condizione;}
-        function <void (Player&, Stanza&) > getEffetto () const { return effetto;}
-        bool isAttivato () const { return attivato;}
+    bool trigger(Player& p, Stanza& s) {
+        if (!attivato_ && condizione_(p, s)) {
+            azione_(p, s);
+            attivato_ = true;
+            return true;
+        }
+        return false;
+    }
 
-        // Metodi setter
-        void setNome (const string& n) { nome = n;}
-        void setCondizione (function <bool( Player&, Stanza&) > c) { condizione = c;}
-        void setEffetto (function <void (Player&, Stanza&) > e) { effetto = e;}
-        void setAttivato (bool a) { attivato = a;}
-
+    bool attivato() const { return attivato_; }
 };
+
+#endif

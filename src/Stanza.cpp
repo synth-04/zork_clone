@@ -1,125 +1,78 @@
 #include "Stanza.h"
-#include "Oggetto.h"
 #include "Player.h"
-#include "Nemico.h"
+
 
 #include <algorithm>
 
 using namespace std;
 
-// Scontro nella stanza
-
-void Stanza::scontro(Player& p) {
-    if (!nemico) return;
-
-    cout << nemico->getDescrizione() << "\n";
-
-    while (p.getHp() > 0 && nemico->getHp() > 0) {
-        cout << p.getNome() << " HP: " << p.getHp()
-             << " | " << nemico->getNome() << " HP: " << nemico->getHp() << "\n";
-
-        // Turno player
-        cout << "Scegli un'azione:\n";
-        cout << "a. Attacca \n";
-        cout << "i. Inventario \n";
-
-        char scelta;
-        cin >> scelta;
-        switch(scelta) {
-            case 'a': p.attacca(*nemico); break;
-            case 'i': p.gestisciInventario(); break;
-            default: 
-                cout << "Azione non valida.\n";
-                continue;
-        }
-
-        // Turno nemico
-        if (nemico->getHp() > 0) {
-            nemico->attacca(p, nemico->getTipo(), nemico->getPotenza(), nemico->getDanno());
-        }
-    }
-
-    if (p.getHp() <= 0) {
-        cout << p.getNome() << " è stato sconfitto...\n";
-        cout << "Game Over.\n";
-        system("pause");
-        exit(0);
-    } else if (nemico->getHp() <= 0) {
-        cout << nemico->getNome() << " è stato sconfitto!\n";
-        nemico = nullptr; // 👈 rimosso dalla stanza
-    }
-}
-
-// Aggiungi scontro
-
-void Stanza::aggiungiScontro(Nemico* n) {
-    nemico = n;
-}
-
-
 // Mostra stanza
 
-void Stanza::mostra(Player& p) {
-    if (nemico) {
-        scontro(p);
-    }
+void Stanza::mostra() const {
+    cout << "\n== " << nome_ << " ==\n";
+    cout << descrizione_ << "\n";
 
-    if (eventi.size() > 0) {
-        for (auto& e : eventi) {
-            if (!e.isAttivato() && e.getCondizione()(p, *this)) {
-                e.getEffetto()(p, *this);
-                e.setAttivato(true);
-            }
-        }
-    }
-
-    cout << nome << "\n\n";
-    cout << descrizione << "\n\n";
-    if (!oggetti_stanza.empty()) {
+    if (!oggetti_stanza_.empty()) {
         cout << "Nella stanza vedi:\n";
-        for (const auto& o : oggetti_stanza) {
+        for (auto const& o : oggetti_stanza_) {
             cout << "- " << o->getNome() << ": " << o->getDescrizioneStanza() << "\n";
         }
-    } else {
-        cout << "La stanza è vuota.\n";
     }
 }
 
 // Mostra uscite
 
 void Stanza::mostraUscite() const {
-    if (uscite.empty()) {
-        cout << "Non ci sono uscite disponibili in questa stanza.\n";
+    if (uscite_.empty()) {
+        cout << "Non vedi altre vie d'uscita.\n";
         return;
     }
 
-    for (size_t i = 0; i < uscite.size(); i++) {
-        cout << i+1 << ". Vai verso " << uscite[i]->getDescrizioneBreve() << "\n";
+    for (size_t i = 0; i < uscite_.size(); i++) {
+        cout << i+1 << ". Vai verso " << uscite_[i]->getDescrizioneBreve() << "\n";
     }
 }
 
-// Aggiungi uscita
+// Mostra azioni
 
-void Stanza::aggiungiUscita(Stanza* stanza) {
-    uscite.push_back(stanza);
+void Stanza::mostraAzioni() const {
+    if (azioni_.empty()) {
+        cout << "Non ci sono azioni disponibili in questa stanza.\n";
+        return;
+    }
+    cout << "Azioni disponibili:\n";
+    for (size_t i = 0; i < azioni_.size(); ++i) {
+        cout << (i+1) << ". " << azioni_[i].first << "\n";
+    }
+}
+
+// Scegli azione
+
+pair<string,string> Stanza::scegliAzione(int scelta) const {
+    if (scelta < 1 || scelta > (int)azioni_.size()) {
+        cout << "Azione non disponibile.\n";
+        return {"",""};
+    }
+    return azioni_[scelta-1]; // {id, msg}
 }
 
 // Aggiungi oggetto
 
-void Stanza::aggiungiOggetto(Oggetto* o) {
-    oggetti_stanza.push_back(o);
+void Stanza::aggiungiOggetto(unique_ptr<Oggetto> o) {
+    oggetti_stanza_.push_back(move(o));
     string id = "Raccogli " + o->getNome();
-    string desc = "Hai raccolto " + o->getNome();
-    aggiungiAzione(id, desc);
+    string msg = "Hai raccolto " + o->getNome() + ".";
+    aggiungiAzione(id, msg);
+
 }
 
 // Prendi oggetto
 
-Oggetto* Stanza::prendiOggetto(const string& nome) {
-    for (auto it = oggetti_stanza.begin(); it != oggetti_stanza.end(); ++it) {
+unique_ptr<Oggetto> Stanza::prendiOggetto(const string& nome) {
+    for (auto it = oggetti_stanza_.begin(); it != oggetti_stanza_.end(); ++it) {
         if ((*it)->getNome() == nome) {
-            Oggetto* trovato = *it;
-            oggetti_stanza.erase(it);
+            unique_ptr<Oggetto> trovato = move(*it);
+            oggetti_stanza_.erase(it);
             return trovato;
         }
     }
@@ -129,70 +82,83 @@ Oggetto* Stanza::prendiOggetto(const string& nome) {
 // Rimuovi oggetto
 
 void Stanza::rimuoviOggetto(const string& nome) {
-    auto it = remove_if(oggetti_stanza.begin(), oggetti_stanza.end(),
-                             [&nome](Oggetto* o) { return o->getNome() == nome; });
-    if (it != oggetti_stanza.end()) {
-        oggetti_stanza.erase(it, oggetti_stanza.end());
-    } else {
-        cout << nome << " non trovato nella stanza.\n";
+    auto it = remove_if(oggetti_stanza_.begin(), oggetti_stanza_.end(),
+                        [&nome](const unique_ptr<Oggetto>& o) { return o->getNome() == nome; });
+    if (it != oggetti_stanza_.end()) {
+        oggetti_stanza_.erase(it, oggetti_stanza_.end());
+        // Rimuovi azione associata
+        azioni_.erase(remove_if(azioni_.begin(), azioni_.end(),
+                                [&nome](const pair<string,string>& a) {
+                                    return a.first == "Raccogli " + nome;
+                                }), azioni_.end());
     }
 }
 
-// Scelta uscita
+// Trigger eventi
 
-string Stanza::scegliUscita(int scelta) const {
-    if (scelta >= 1 && scelta <= (int)uscite.size()) {
-        return uscite[scelta-1]->getNome();
-    }
-    cout << "Uscita non disponibile.\n";
-    return "";
-}
-
-
-
-// Ottieni stanza adiacente
-
-Stanza* Stanza::getStanzaAdiacente(const string& nome) const {
-    for (Stanza* s : uscite) {
-        if (s->getNome() == nome) {
-            return s;
+void Stanza::triggerEventi(Player& p) {
+    for (auto& e : eventi_) {
+        if (e.trigger(p, *this)) {
+            break; // solo un evento per volta
         }
     }
-    return nullptr;
 }
 
-// Aggiungi azione
+// Scontro
 
-void Stanza::aggiungiAzione(const string& id, const string& msg) {
-    azioni.emplace_back(id, msg);
-}
+void Stanza::scontro(Player& p) {
+    if (!nemico_) return;
 
-// Mostra azioni
+    cout << nemico_->getDescrizione() << "\n";
 
-void Stanza::mostraAzioni() const {
-    if (azioni.empty()) {
-        cout << "Non ci sono azioni disponibili in questa stanza.\n";
-        return;
+    while (p.getHp() > 0 && nemico_->getHp() > 0) {
+        cout << p.getNome() << " HP: " << p.getHp()
+             << " | " << nemico_->getNome() << " HP: " << nemico_->getHp() << "\n";
+
+        // Turno player
+        cout << "Scegli un'azione:\n";
+        cout << "a. Attacca \n";
+        cout << "i. Inventario \n";
+
+        char scelta;
+        cin >> scelta;
+        switch(scelta) {
+            case 'a': p.attacca(*nemico_); break;
+            case 'i': p.gestisciInventario(); break;
+            default: 
+                cout << "Azione non valida.\n";
+                continue;
+        }
+
+        // Turno nemico
+        if (nemico_->getHp() > 0) {
+            nemico_->attacca(p);
+        }
     }
-    cout << "Azioni disponibili:\n";
-    for (size_t i = 0; i < azioni.size(); ++i) {
-        cout << (i+1) << ". " << azioni[i].first << "\n";
+
+    if (p.getHp() <= 0) {
+        cout << p.getNome() << " è stato sconfitto...\n";
+        cout << "Game Over.\n";
+        system("pause");
+        exit(0);
+    } else if (nemico_->getHp() <= 0) {
+        cout << nemico_->getNome() << " è stato sconfitto!\n";
+        nemico_ = nullptr; // rimuove il nemico dalla stanza
     }
 }
 
-// Scegli azione
 
-pair<string,string> Stanza::scegliAzione(int scelta) const {
-    if (scelta < 1 || scelta > (int)azioni.size()) {
-        cout << "Azione non disponibile.\n";
-        return {"",""};
-    }
-    return azioni[scelta-1]; // {id, msg}
+// Quando il player entra
+
+void Stanza::entra(Player& p) {
+    mostra();           // descrizione
+    triggerEventi(p);   // eventi scriptati
+    if (nemico_) scontro(p); // eventuale scontro
 }
 
-// Aggiungi evento
-void Stanza::aggiungiEvento(const Evento& e) {
-    eventi.push_back(e);
+Stanza::~Stanza() {
+    // Nemico non gestito da unique_ptr, quindi lo eliminiamo manualmente
+    delete nemico_;
 }
 
 

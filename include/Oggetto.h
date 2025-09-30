@@ -1,73 +1,53 @@
 #ifndef OGGETTO_H
 #define OGGETTO_H
 
-#include <iostream>
-#include <vector>
-#include <map>
 #include <string>
-#include <random>
-#include "Player.h"
-#include "Stanza.h"
+#include <memory>
+#include <iostream>
 
 using namespace std;
 
 class Player;
-class Stanza;
-
-/* Oggetto */
 
 class Oggetto {
+protected:
+    string nome_;
+    string tipo_; // "arma", "armatura", "scudo", "anello", "amuleto", "consumabile"
+    int bHp_=0, bMana_ = 0, bStr_=0, bAgi_=0, bMind_=0, bFaith_=0;
+    string descrizioneStanza_;
 
-    // Attributi
+public:
 
-    private:
+    // Costruttore
 
-        string nome;
-        string tipo;
-        string descrizione_stanza;
+    Oggetto(string nome, string tipo, string descr,
+            int hp=0, int mana = 0, int str=0, int agi=0, int mind=0, int faith=0)
+        : nome_(move(nome)), tipo_(move(tipo)), bHp_(hp), bMana_(mana), bStr_(str),
+          bAgi_(agi), bMind_(mind), bFaith_(faith), descrizioneStanza_(move(descr)) {}
 
-        // Bonus oggetto
+    // Metodi getter
 
-        int bonus_hp;
-        int bonus_mana;
-        int bonus_str;
-        int bonus_agi;
-        int bonus_mind;
-        int bonus_faith;
+    const string& getNome() const { return nome_; }
+    const string& getTipo() const { return tipo_; }
 
-    // Metodi
+    int getBonusHp()   const { return bHp_; }
+    int getBonusMana() const { return bMana_; }
+    int getBonusStr()  const { return bStr_; }
+    int getBonusAgi()  const { return bAgi_; }
+    int getBonusMind() const { return bMind_; }
+    int getBonusFaith()const { return bFaith_; }
 
-    public:
+    const string& getDescrizioneStanza() const { return descrizioneStanza_; }
 
-        // Costruttore
+    // Azione quando l'oggetto viene usato o equipaggiato
+    void usa(Player& p);
 
-        Oggetto ( string n, string t, string ds, int bh=0, int bm=0, int bs=0, int ba=0, int bmi=0, int bf=0)
-            : nome(n), tipo(t), descrizione_stanza(ds), bonus_hp(bh), bonus_mana(bm), bonus_str(bs), bonus_agi(ba), bonus_mind(bmi), bonus_faith(bf) {};
-
-        // Metodi getter
-
-        string getNome () const { return nome;}
-        string getTipo () const { return tipo;}
-        string getDescrizioneStanza () const { return descrizione_stanza;}
-        int getBonusHp () const { return bonus_hp;}
-        int getBonusMana () const { return bonus_mana;}
-        int getBonusStr () const { return bonus_str;}
-        int getBonusAgi () const { return bonus_agi;}
-        int getBonusMind () const { return bonus_mind;}
-        int getBonusFaith () const { return bonus_faith;}
-
-
-        // Metodi setter
-
-        void setNome (const string& n) { nome = n;}
-        void setTipo (const string& t) { tipo = t;}
-        void setDescrizioneStanza (const string& ds) { descrizione_stanza = ds;}
-
-        // Azioni
-
-        void usa(Player& p); 
-
+    // Factory helper
+    template<class T, class...Args>
+    static unique_ptr<Oggetto> make(Args&&...args) {
+        return make_unique<T>(forward<Args>(args)...);
+    }
 };
 
-#endif 
+#endif
 

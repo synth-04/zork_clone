@@ -6,36 +6,35 @@ using namespace std;
 
 // Attacca player
 
-void Nemico::attacca(Player& p, string tipo, int potenza, int danno) {
+void Nemico::attacca(Player& p) {
 
-    if (tipo == "fisico") {
+        if (getTipo() == "fisico") // fisico
 
-        int bonus_fisico = p.getAgi()/2;
-        p.prova(bonus_fisico, potenza) ? danno = 0 : danno = danno;
+        {int bonus_fisico = p.getAgi()/2;
+            p.prova(bonus_fisico, potenza_) ? danno_ = 0 : danno_ = danno_;}
 
-    } else if (tipo == "magico") {
+        else if (getTipo() == "magico") // magico
 
-        int bonus_magico = p.getMind()/2;
-        p.prova(bonus_magico, potenza) ? danno = 0 : danno = danno;
+        {int bonus_magico = p.getMind()/2;
+            p.prova(bonus_magico, potenza_) ? danno_ = 0 : danno_ = danno_;}
 
-    } else if (tipo == "sacrilego") {
+        else if (getTipo() == "sacrilego") // sacrilego
+        
+        {int bonus_sacrilego = p.getFaith()/2;
+            p.prova(bonus_sacrilego, potenza_) ? danno_ = 0 : danno_ = danno_;}
+        // esito attacco
 
-        int bonus_sacrilego = p.getFaith()/2;
-        p.prova(bonus_sacrilego, potenza) ? danno = 0 : danno = danno;
+    if (danno_ == 0) {
+        cout << nome_ << " attacca " << p.getNome() << " ma manca il colpo!\n";
+        return;
+    }
+    else {
+        cout << nome_ << " attacca " << p.getNome() << " e infligge " << danno_ << " danni di tipo " << getTipo()<< ".\n";
+        p.subisciDanno(danno_);
 
     }
-    cout << nome << " attacca " << p.getNome() << " e infligge " << danno << " danni di tipo " << tipo << "\n";
-    p.subisciDanno(danno);
+    
 }
 
-// Subisci danno
 
-void Nemico::subisciDanno(int s) {
-    hp -= s;
-}
-
-// Cura danno
-void Nemico::curaDanno(int c) {
-    hp += c;
-}
 

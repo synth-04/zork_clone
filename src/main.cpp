@@ -5,6 +5,9 @@
 #include "Player.h"
 #include "Stanza.h"
 #include "Oggetto.h"
+#include "Nemico.h"
+#include "Evento.h"
+#include "Game.h"
 
 using namespace std;
 
@@ -16,6 +19,7 @@ int main() {
         // Stanza(nome, descrizione, descrizione_breve)
 
         Stanza* entrata = new Stanza("Entrata", "Sei all'entrata dell'immenso dungeon...", "entrata del dungeon");
+
         entrata->aggiungiAzione("Osserva la porta", "Una grande portone, pieno di sigilli arcani, blocca il tuo cammino. Inspiegabilmente, è aperto. Sembra che qualcuno sia già passato di qui.");
 
         Stanza* sala_spada = new Stanza("Sala della Spada", "Ti ritrovi in una piccola stanza, poco dopo il grande portone. Al centro, uno scheletro giace appoggiato ad un pilastro.", "sala della spada");
@@ -49,6 +53,8 @@ int main() {
             "Un enorme drago rosso con occhi fiammeggianti si erge di fronte a te.", 
             20, "fisico", 20, 20);
 
+       /* non ancora usati 
+
         Nemico* goblin = new Nemico
             ("Goblin", 
             "Un piccolo goblin verde con uno sguardo folle ti blocca il cammino. Vuole sgozzarti!", 
@@ -63,6 +69,8 @@ int main() {
             ("Lich", 
             "Un potente lich, avvolto in vesti logore e con occhi che brillano di una luce malvagia, ti fissa con disprezzo.", 
             25, "magico", 20, 15);
+        
+        */
 
         Nemico* ragno = new Nemico
             ("Ragno Gigante", 
@@ -116,19 +124,15 @@ int main() {
         Player p;
 
         p.generaPersonaggio();
-        p.setPos(entrata);
+        p.setPos(entrata); // posizione iniziale
 
         // ======= Inizio gioco ======= //
 
 
-        // Loop principale
-        while (true) {
-            p.getPos()->mostra(p);
-            p.scegliAzione(*p.getPos());
-        }
+        // == Creazione game == //
+        
+        Game game( &p, entrata);
+        game.loop();
 
-
-    system("pause");
-
-    return 0;
+        return 0;
 }

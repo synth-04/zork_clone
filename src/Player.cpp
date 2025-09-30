@@ -2,81 +2,30 @@
 #include "Stanza.h"
 #include "Oggetto.h"
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
-// Getter statistiche
-int Player::getHp() const
-{
-    int total_hp = hp;
-    if (armatura)
-        total_hp += armatura->getBonusHp();
-    if (anello)
-        total_hp += anello->getBonusHp();
-    if (amuleto)
-        total_hp += amuleto->getBonusHp();
-    return total_hp;
+// ===== Statistiche calcolate =====
+template<typename F>
+int Player::sommaBonus(F f) const {
+    int tot = 0;
+    if (arma_)    tot += (arma_->*f)();
+    if (armatura_)tot += (armatura_->*f)();
+    if (scudo_)   tot += (scudo_->*f)();
+    if (anello_)  tot += (anello_->*f)();
+    if (amuleto_) tot += (amuleto_->*f)();
+    return tot;
 }
 
-int Player::getMana() const
-{
-    int total_mana = mana;
-    if (armatura)
-        total_mana += armatura->getBonusMana();
-    if (anello)
-        total_mana += anello->getBonusMana();
-    if (amuleto)
-        total_mana += amuleto->getBonusMana();
-    return total_mana;
-}
 
-int Player::getStr() const
-{
-    int total_str = str;
-    if (arma)
-        total_str += arma->getBonusStr();
-    if (anello)
-        total_str += anello->getBonusStr();
-    if (amuleto)
-        total_str += amuleto->getBonusStr();
-    return total_str;
-}
+int Player::getHp() const       { return hp_   + sommaBonus(&Oggetto::getBonusHp); }
+int Player::getMana() const     { return mana_ + sommaBonus(&Oggetto::getBonusMana); }
+int Player::getStr() const       { return str_ + sommaBonus(&Oggetto::getBonusStr); }
+int Player::getAgi() const       { return agi_  + sommaBonus(&Oggetto::getBonusAgi); }
+int Player::getMind() const      { return mind_ + sommaBonus(&Oggetto::getBonusMind); }
+int Player::getFaith() const     { return faith_ + sommaBonus(&Oggetto::getBonusFaith); }
 
-int Player::getAgi() const
-{
-    int total_agi = agi;
-    if (armatura)
-        total_agi += armatura->getBonusAgi();
-    if (anello)
-        total_agi += anello->getBonusAgi();
-    if (amuleto)
-        total_agi += amuleto->getBonusAgi();
-    return total_agi;
-}
-
-int Player::getMind() const
-{
-    int total_mind = mind;
-    if (armatura)
-        total_mind += armatura->getBonusMind();
-    if (anello)
-        total_mind += anello->getBonusMind();
-    if (amuleto)
-        total_mind += amuleto->getBonusMind();
-    return total_mind;
-}
-
-int Player::getFaith() const
-{
-    int total_faith = faith;
-    if (armatura)
-        total_faith += armatura->getBonusFaith();
-    if (anello)
-        total_faith += anello->getBonusFaith();
-    if (amuleto)
-        total_faith += amuleto->getBonusFaith();
-    return total_faith;
-}
 
 // Prove
 int Player::prova(int b, int ca)
@@ -89,125 +38,171 @@ int Player::prova(int b, int ca)
 
 // Scegli azione
 
-void Player::scegliAzione(Stanza &stanza)
-{
+void Player::scegliAzione(Stanza& stanza) {
     cout << "\nCosa vuoi fare?\n";
     cout << "m. Muoviti\n";
-    cout << "i. Statistiche e inventario\n";
-    cout << "s. Interagisci\n";
-    cout << "e. Abbandona\n";
+    cout << "i. Inventario\n";
+    cout << "t. Interagisci\n";
+    cout << "e. Esci\n";
+    char scelta; cin >> scelta;
 
-    char scelta;
-    cin >> scelta;
-
-    switch (scelta)
-    {
-    case 'm':
-        muovi(stanza);
-        break;
-    case 'i':
-        gestisciInventario();
-        break;
-    case 's':
-        interagisciStanza(stanza);
-        break;
-    case 'e':
-        cout << "L'eroe, mesto, si ritira...\n";
-        system("pause");
-        exit(0);
+    switch (scelta) {
+        case 'm': muovi(stanza); break;
+        case 'i': gestisciInventario(); break;
+        case 't': interagisciStanza(stanza); break;
+        case 'e': cout << "L'eroe, mesto, fugge...\n"; system("pause"); exit(0);
+        default: cout << "Scelta non valida.\n"; break;
     }
 }
 
-// Subisci danno
+// Interagisci con la stanza
+
+void Player::interagisciStanza(Stanza& stanza) {
+    // Mostra il menu azioni della stanza
+    stanza.mostraAzioni();
+    if (true) {
+        cout << "Seleziona azione (numero, 0 per annullare): ";
+        int scelta;
+        if (!(cin >> scelta)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Input non valido.\n";
+            return;
+        }
+        if (scelta == 0) return;
+
+        // Ottieni {id logico, messaggio} dell’azione scelta
+        auto [id, msg] = stanza.scegliAzione(scelta);
+        if (id.empty()) return; // scelta fuori range già gestita da Stanza
+
+        // Caso: azione di raccolta oggetto
+        if (id.rfind("Raccogli ", 0) == 0) {
+            const string nome = id.substr(9); // dopo "Raccogli "
+            // Sposta l’oggetto dalla stanza all’inventario
+            auto obj = stanza.prendiOggetto(nome);   // unique_ptr<Oggetto>
+            if (obj) {
+                aggiungiOggettoInventario(std::move(obj));
+                if (!msg.empty()) cout << msg << "\n";
+                else cout << "Hai raccolto " << nome << ".\n";
+            } else {
+                cout << "Oggetto non trovato.\n";
+            }
+            return;
+        }
+
+        // Altre azioni "non di raccolta": stampa messaggio o ID
+        if (!msg.empty()) cout << msg << "\n";
+        else cout << id << "\n";
+    }
+}
+
+    // Movimento
+
+    void Player::muovi(Stanza& stanza) {
+    stanza.mostraUscite();
+    int scelta; cin >> scelta;
+    const auto& uscite = stanza.getUscite();
+    if (scelta >= 1 && scelta <= (int)uscite.size()) {
+        setPos(uscite[scelta-1]);
+        getPos()->entra(*this);
+    } else {
+        cout << "Uscita non valida.\n";
+    }
+}
+
+// ======= Combattimento =======
+
+    void Player::attacca(Nemico & n)
+    {
+
+        // Attacco base (da modificare)
+
+        int danno = getStr();
+        cout << "Attacchi " << n.getNome() << " e infliggi " << danno << " danni.\n";
+        n.subisciDanno(danno);
+    }
+
+    // Subisci danno
 void Player::subisciDanno(int s)
 {
-    hp -= s;
+    hp_ -= s;
 }
 
 // Cura danno
 void Player::curaDanno(int c)
 {
     // Cura fino al massimo degli hp base
-    if (hp + c > hp_max)
+    if (hp_ + c > hp_max_)
     {
-        hp = hp_max;
+        hp_ = hp_max_;
     }
     else
     {
-        hp += c;
+        hp_ += c;
     }
 }
 
 // Cura mana
 void Player::curaMana(int c)
 {
-    if (mana + c > mana_max)
+    if (mana_ + c > mana_max_)
     {
-        mana = mana_max;
+        mana_ = mana_max_;
     }
     else
     {
-        mana += c;
+        mana_ += c;
     }
 }
 
-// Equipaggia oggetto
-void Player::equipaggiaOggetto(Oggetto *o)
-{
-    if (!o)
+// ==Inventario e personaggio==
+
+// Aggiorna statistiche
+    
+void Player::aggiornaStatistiche()
     {
-        cout << "Oggetto non valido.\n";
-        return;
+
+        getHp();
+        getMana();
+        getStr();
+        getAgi();
+        getMind();
+        getFaith();
+
     }
 
-    string tipo = o->getTipo();
-    if (tipo == "arma")
-    {
-        arma = o;
-    }
-    else if (tipo == "armatura")
-    {
-        armatura = o;
-    }
-    else if (tipo == "scudo")
-    {
-        scudo = o;
-    }
-    else if (tipo == "anello")
-    {
-        anello = o;
-    }
-    else if (tipo == "amuleto")
-    {
-        amuleto = o;
-    }
-    else
-    {
-        cout << "Non puoi equipaggiare questo oggetto.\n";
-        return;
-    }
-    cout << "Hai equipaggiato: " << o->getNome() << "\n";
+// Equipaggia oggetto
+void Player::equipaggiaOggetto(Oggetto* o) {
+    if (!o) { cout << "Oggetto non valido.\n"; return; }
+    const string& t = o->getTipo();
+    if (t == "arma") arma_ = o;
+    else if (t == "armatura") armatura_ = o;
+    else if (t == "scudo") scudo_ = o;
+    else if (t == "anello") anello_ = o;
+    else if (t == "amuleto") amuleto_ = o;
+    else { cout << "Non è equipaggiabile.\n"; return; }
+    cout << "Equipaggiato: " << o->getNome() << "\n";
 }
 
 // Aggiungi oggetto
-void Player::aggiungiOggettoInventario(Oggetto *o)
+
+void Player::aggiungiOggettoInventario(unique_ptr<Oggetto> o)
 {
-    inventario.push_back(o);
-    cout << o->getNome() << " aggiunto all'inventario!\n";
+    inventario.push_back(move(o));
+    cout << inventario.back()->getNome() << " aggiunto all'inventario.\n";
 }
 
 // Rimuovi oggetto
 void Player::rimuoviOggettoInventario(Oggetto *o)
 {
-    auto it = find(inventario.begin(), inventario.end(), o);
-    if (it != inventario.end())
-    {
-        inventario.erase(it);
-        cout << o->getNome() << " rimosso dall'inventario.\n";
-    }
-    else
-    {
-        cout << o->getNome() << " non trovato nell'inventario.\n";
+    auto& inv = inventario;
+    auto it = std::remove_if(inv.begin(), inv.end(),
+                             [o](const std::unique_ptr<Oggetto>& ptr){ return ptr.get() == o; });
+    if (it != inv.end()) {
+        std::cout << o->getNome() << " rimosso dall'inventario.\n";
+        inv.erase(it, inv.end());
+    } else {
+        std::cout << "Oggetto non trovato nell'inventario.\n";
     }
 }
 
@@ -231,11 +226,11 @@ void Player::gestisciInventario()
     // Equipaggiamento
 
     cout << "Equipaggiamento:\n";
-    cout << "Arma: \t\t" << (arma ? arma->getNome() : "Nessuna") << "\n";
-    cout << "Armatura: \t" << (armatura ? armatura->getNome() : "Nessuna") << "\n";
-    cout << "Scudo: \t\t" << (scudo ? scudo->getNome() : "Nessuno") << "\n";
-    cout << "Anello: \t" << (anello ? anello->getNome() : "Nessuno") << "\n";
-    cout << "Amuleto: \t" << (amuleto ? amuleto->getNome() : "Nessuno") << "\n\n";
+    cout << "Arma: \t\t" << (arma_ ? arma_->getNome() : "Nessuna") << "\n";
+    cout << "Armatura: \t" << (armatura_ ? armatura_->getNome() : "Nessuna") << "\n";
+    cout << "Scudo: \t\t" << (scudo_ ? scudo_->getNome() : "Nessuno") << "\n";
+    cout << "Anello: \t" << (anello_ ? anello_->getNome() : "Nessuno") << "\n";
+    cout << "Amuleto: \t" << (amuleto_ ? amuleto_->getNome() : "Nessuno") << "\n\n";
 
     if (inventario.empty())
     {
@@ -274,100 +269,13 @@ void Player::gestisciInventario()
     }
 }
 
-// Interagisci con la stanza
-void Player::interagisciStanza(Stanza &stanza)
-{
-    stanza.mostraAzioni();
-    int scelta;
-    cin >> scelta;
-    auto [id, msg] = stanza.scegliAzione(scelta);
-    if (id.empty())
-        return;
-
-    if (id.rfind("Raccogli ", 0) == 0)
-    { // inizia con "Raccogli "
-        std::string nome_oggetto = id.substr(9);
-        auto it = std::find_if(stanza.oggetti_stanza.begin(), stanza.oggetti_stanza.end(),
-                               [&nome_oggetto](Oggetto *o)
-                               { return o->getNome() == nome_oggetto; });
-        if (it != stanza.oggetti_stanza.end())
-        {
-            aggiungiOggettoInventario(*it);
-            stanza.rimuoviOggetto(nome_oggetto);
-            // Se hai un messaggio specifico:
-            if (!msg.empty())
-                {
-                std::cout << msg << "\n";
-                }
-            else
-            {
-                std::cout << "Hai raccolto " << nome_oggetto << "!\n";
-                stanza.azioni.erase(stanza.azioni.begin() + (scelta - 1));
-            }
-        }
-        else
-        {
-            std::cout << "Oggetto non trovato nella stanza.\n";
-        }
-    }
-    else
-    {
-        // altre azioni base: stampa il messaggio descrittivo, se presente
-        if (!msg.empty())
-            std::cout << msg << "\n";
-        else
-            std::cout << id << "\n";
-    }
-}
-
-    // Movimento
-
-    void Player::muovi(Stanza & stanza)
-    {
-        stanza.mostraUscite();
-        int scelta;
-        cin >> scelta;
-        if (scelta >= 1 && scelta <= (int)stanza.uscite.size())
-        {
-            setPos(stanza.uscite[scelta - 1]);
-        }
-        else
-        {
-            cout << "Uscita non valida.\n";
-        }
-    }
-
-    // Attacca nemico
-
-    void Player::attacca(Nemico & n)
-    {
-
-        // Attacco base (da modificare)
-
-        int danno = getStr();
-        cout << "Attacchi " << n.getNome() << " e infliggi " << danno << " danni.\n";
-        n.subisciDanno(danno);
-    }
-
-    void Player::aggiornaStatistiche()
-    {
-
-        getHp();
-        getMana();
-        getStr();
-        getAgi();
-        getMind();
-        getFaith();
-
-    }
-
-    // Genera personaggio
+// == Generazione personaggio ==
 
     void Player::generaPersonaggio()
     {
 
         cout << "Inserisci il nome del tuo eroe: ";
-        cin >> nome;
+        cin >> nome_;
 
         static random_device rd;
         static mt19937 gen(rd());
@@ -375,20 +283,20 @@ void Player::interagisciStanza(Stanza &stanza)
 
         do {
 
-        str = dist(gen);
-        agi = dist(gen);
-        mind = dist(gen);
-        faith = dist(gen);
+        str_ = dist(gen);
+        agi_ = dist(gen);
+        mind_ = dist(gen);
+        faith_ = dist(gen);
 
-        } while (str + agi + mind + faith != 40);
+        } while (str_ + agi_ + mind_ + faith_ != 40);
 
-        hp = 50 + str * 2;
-        setHpMax(hp);
-        mana = 30 + mind * 2 + faith;
-        setManaMax(mana);
+        hp_ = 50 + str_ * 2;
+        setHpMax(hp_);
+        mana_ = 30 + mind_ * 2 + faith_;
+        setManaMax(mana_);
         
 
-        cout << "Benvenuto, " << nome << "! Le tue statistiche iniziali sono:\n";
+        cout << "Benvenuto, " << nome_ << "! Le tue statistiche iniziali sono:\n";
         cout << "HP: \t\t" << getHp() << "\n";
         cout << "Mana: \t\t" << getMana() << "\n";
         cout << "Forza: \t\t" << getStr() << "\n";
@@ -397,16 +305,4 @@ void Player::interagisciStanza(Stanza &stanza)
         cout << "Fede: \t\t" << getFaith() << "\n\n";
 
         system("pause");
-    }
-
-    // Distruttore
-
-    Player::~Player()
-    {
-        for (auto *o : inventario)
-        {
-            delete o;
-        }
-
-        inventario.clear();
     }

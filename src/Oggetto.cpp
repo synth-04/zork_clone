@@ -9,17 +9,17 @@ using namespace std;
 void Oggetto::usa(Player& p) {
 
             // Pozione
-            if (tipo == "pozione") {
-                cout << "Usi " << nome << ". " << "\n";
-                p.curaDanno(bonus_hp);
-                p.curaMana(bonus_mana);
+            if (getTipo() == "pozione") {
+                cout << "Usi " << getNome() << ". " << "\n";
+                p.curaDanno(getBonusHp());
+                p.curaMana(getBonusMana());
                 p.rimuoviOggettoInventario(this);               
             
             } 
             // Equipaggiamento
 
-            else if (tipo == "arma" || tipo == "armatura" || tipo == "scudo" || tipo == "anello" || tipo == "amuleto") {
-                cout << "Equipaggi " << nome << ". " << "\n";
+            else if (getTipo() == "arma" || getTipo() == "armatura" || getTipo() == "scudo" || getTipo() == "anello" || getTipo() == "amuleto") {
+                cout << "Equipaggi " << getNome() << ". " << "\n";
                 p.equipaggiaOggetto(this);
 
             } else {
