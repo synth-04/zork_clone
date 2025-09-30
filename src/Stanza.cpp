@@ -64,6 +64,15 @@ void Stanza::mostra(Player& p) {
         scontro(p);
     }
 
+    if (eventi.size() > 0) {
+        for (auto& e : eventi) {
+            if (!e.isAttivato() && e.getCondizione()(p, *this)) {
+                e.getEffetto()(p, *this);
+                e.setAttivato(true);
+            }
+        }
+    }
+
     cout << nome << "\n\n";
     cout << descrizione << "\n\n";
     if (!oggetti_stanza.empty()) {
@@ -180,3 +189,10 @@ pair<string,string> Stanza::scegliAzione(int scelta) const {
     }
     return azioni[scelta-1]; // {id, msg}
 }
+
+// Aggiungi evento
+void Stanza::aggiungiEvento(const Evento& e) {
+    eventi.push_back(e);
+}
+
+

@@ -24,6 +24,8 @@ int main() {
         Stanza* sala_boss = new Stanza("Sala Boss", "Il fuoco inonda questa immensa sala.", "una grande sala illuminata dal fuoco");
 
         Stanza* sala_alchimia = new Stanza("Sala dell'Alchimia", "Questa stanza è piena di strani alambicchi e bottiglie. Molti sono rotti da tempo, altri ancora brillano fosforescenti nell'oscurità.", "sala dell'alchimia");
+        
+        Stanza* sala_ragni = new Stanza("Sala dei Ragni", "La stanza è avvolta in una fitta ragnatela. Il pavimento è disseminato di ossa di piccoli animali.", "sala buia e piena di ragnatele");
 
 
         // ======= Creazione oggetti ======= //
@@ -67,6 +69,23 @@ int main() {
             "Un enorme ragno con zanne velenose e otto occhi rossi ti osserva minacciosamente.", 
             18, "fisico", 15, 8);
 
+
+        // ======= Creazione eventi ======= //
+        // Evento(nome, condizione, effetto, attivato=false)
+
+        Evento attacco_ragno ("Attacco del Ragno",
+            [](Player& p, Stanza& s) -> bool {
+                return p.prova(p.getAgi(), 12) && s.getNome() == "Sala dei Ragni";
+            },
+
+            [ragno](Player& p, Stanza& s) {
+                cout << "Mentre entri nella stanza, un enorme ragno ti salta addosso dalle ombre!\n";
+                p.subisciDanno(5);
+                s.aggiungiScontro(ragno);
+            }
+        );
+
+        sala_ragni->aggiungiEvento(attacco_ragno);
         
         // Aggiungi scontro: stanza->aggiungiScontro(nemico)
 
@@ -78,8 +97,10 @@ int main() {
         entrata->aggiungiUscita(sala_spada);
         sala_spada->aggiungiUscita(entrata);
         sala_spada->aggiungiUscita(sala_alchimia);
+        sala_spada->aggiungiUscita(sala_ragni);
         sala_alchimia->aggiungiUscita(sala_spada);
         sala_spada->aggiungiUscita(sala_boss);
+        sala_ragni->aggiungiUscita(sala_spada);
         sala_boss->aggiungiUscita(sala_spada);
 
         // ======= Creazione player ======= //

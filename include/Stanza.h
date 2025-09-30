@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "Oggetto.h"
 #include "Nemico.h"
+#include "Evento.h"
 
 using namespace std;
 
@@ -28,6 +29,7 @@ public:
     vector<Stanza*> uscite;
     vector<pair<string,string>> azioni;
     vector<Oggetto*> oggetti_stanza;
+    vector <Evento> eventi;
 
     // Costruttori
 
@@ -65,6 +67,7 @@ public:
     pair<string,string> scegliAzione(int scelta) const;
 
     string scegliUscita(int scelta) const;
+    void aggiungiEvento(const Evento& e);
 };
 
 #endif

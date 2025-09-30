@@ -296,10 +296,14 @@ void Player::interagisciStanza(Stanza &stanza)
             stanza.rimuoviOggetto(nome_oggetto);
             // Se hai un messaggio specifico:
             if (!msg.empty())
+                {
                 std::cout << msg << "\n";
+                }
             else
+            {
                 std::cout << "Hai raccolto " << nome_oggetto << "!\n";
                 stanza.azioni.erase(stanza.azioni.begin() + (scelta - 1));
+            }
         }
         else
         {
