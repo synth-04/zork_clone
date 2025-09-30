@@ -13,17 +13,18 @@ class Oggetto {
 protected:
     string nome_;
     string tipo_; // "arma", "armatura", "scudo", "anello", "amuleto", "consumabile"
-    int bHp_=0, bMana_ = 0, bStr_=0, bAgi_=0, bMind_=0, bFaith_=0;
     string descrizioneStanza_;
+    int bHp_=0, bMana_ = 0, bStr_=0, bAgi_=0, bMind_=0, bFaith_=0;
+    
 
 public:
 
     // Costruttore
 
-    Oggetto(string nome, string tipo, string descr,
-            int hp=0, int mana = 0, int str=0, int agi=0, int mind=0, int faith=0)
-        : nome_(move(nome)), tipo_(move(tipo)), bHp_(hp), bMana_(mana), bStr_(str),
-          bAgi_(agi), bMind_(mind), bFaith_(faith), descrizioneStanza_(move(descr)) {}
+    Oggetto (const string& n, const string& t, const string& ds,
+            int bh=0, int bm=0, int bs=0, int ba=0, int bmi=0, int bf=0) :
+        nome_(n), tipo_(t), descrizioneStanza_(ds),
+        bHp_(bh), bMana_(bm), bStr_(bs), bAgi_(ba), bMind_(bmi), bFaith_(bf) {}
 
     // Metodi getter
 
@@ -47,6 +48,9 @@ public:
     static unique_ptr<Oggetto> make(Args&&...args) {
         return make_unique<T>(forward<Args>(args)...);
     }
+
+    // Distruttore
+    virtual ~Oggetto() = default;
 };
 
 #endif

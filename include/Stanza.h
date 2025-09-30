@@ -57,7 +57,12 @@ public:
     pair<string,string> scegliAzione(int scelta) const;
 
     void aggiungiOggetto(unique_ptr<Oggetto> o);
-    void aggiungiOggetto(Oggetto* o) { aggiungiOggetto(std::unique_ptr<Oggetto>(o)); } // overload per raw pointer
+    void aggiungiOggetto(Oggetto* o) {
+        if (!o) return;
+        std::string nome = o->getNome();        // leggi prima del trasferimento
+        oggetti_stanza_.emplace_back(o);        // prende possesso con unique_ptr
+        aggiungiAzione("Raccogli " + nome, "Hai raccolto " + nome + ".");
+    }
     unique_ptr<Oggetto> prendiOggetto(const string& nome);
     void rimuoviOggetto(const string& nome);
 

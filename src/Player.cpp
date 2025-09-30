@@ -4,6 +4,11 @@
 #include <algorithm>
 #include <limits>
 
+#include "Player.h"
+#include "Stanza.h"
+#include "Oggetto.h"
+#include "Nemico.h"
+
 using namespace std;
 
 // ===== Statistiche calcolate =====
@@ -104,7 +109,7 @@ void Player::interagisciStanza(Stanza& stanza) {
     const auto& uscite = stanza.getUscite();
     if (scelta >= 1 && scelta <= (int)uscite.size()) {
         setPos(uscite[scelta-1]);
-        getPos()->entra(*this);
+        // getPos()->entra(*this);
     } else {
         cout << "Uscita non valida.\n";
     }
@@ -188,14 +193,14 @@ void Player::equipaggiaOggetto(Oggetto* o) {
 
 void Player::aggiungiOggettoInventario(unique_ptr<Oggetto> o)
 {
-    inventario.push_back(move(o));
-    cout << inventario.back()->getNome() << " aggiunto all'inventario.\n";
+    inventario_.push_back(move(o));
+    cout << inventario_.back()->getNome() << " aggiunto all'inventario.\n";
 }
 
 // Rimuovi oggetto
 void Player::rimuoviOggettoInventario(Oggetto *o)
 {
-    auto& inv = inventario;
+    auto& inv = inventario_;
     auto it = std::remove_if(inv.begin(), inv.end(),
                              [o](const std::unique_ptr<Oggetto>& ptr){ return ptr.get() == o; });
     if (it != inv.end()) {
@@ -232,16 +237,16 @@ void Player::gestisciInventario()
     cout << "Anello: \t" << (anello_ ? anello_->getNome() : "Nessuno") << "\n";
     cout << "Amuleto: \t" << (amuleto_ ? amuleto_->getNome() : "Nessuno") << "\n\n";
 
-    if (inventario.empty())
+    if (inventario_.empty())
     {
         cout << "Il tuo inventario è vuoto.\n";
         return;
     }
 
     cout << "Oggetti nello zaino:\n";
-    for (size_t i = 0; i < inventario.size(); i++)
+    for (size_t i = 0; i < inventario_.size(); i++)
     {
-        cout << i + 1 << ". " << inventario[i]->getNome() << "\n";
+        cout << i + 1 << ". " << inventario_[i]->getNome() << "\n";
     }
     cout << "0. Annulla\n";
 
@@ -256,16 +261,16 @@ void Player::gestisciInventario()
             cout << "Input non valido. Inserisci un numero.\n";
             continue;
         }
-        if (scelta < 0 || scelta > (int)inventario.size())
+        if (scelta < 0 || scelta > (int)inventario_.size())
         {
             cout << "Scelta non possibile. Riprova.\n";
             continue;
         }
         break;
     }
-    if (scelta > 0 && scelta <= (int)inventario.size())
+    if (scelta > 0 && scelta <= (int)inventario_.size())
     {
-        inventario[scelta - 1]->usa(*this);
+        inventario_[scelta - 1]->usa(*this);
     }
 }
 
@@ -274,8 +279,13 @@ void Player::gestisciInventario()
     void Player::generaPersonaggio()
     {
 
+
+        string nome;
         cout << "Inserisci il nome del tuo eroe: ";
-        cin >> nome_;
+        cout.flush();
+        cin >> nome;
+
+        setNome(nome);
 
         static random_device rd;
         static mt19937 gen(rd());
@@ -303,6 +313,8 @@ void Player::gestisciInventario()
         cout << "Agilità: \t" << getAgi() << "\n";
         cout << "Mente: \t\t" << getMind() << "\n";
         cout << "Fede: \t\t" << getFaith() << "\n\n";
-
-        system("pause");
+        
     }
+
+    // Distruttore
+    Player::~Player() = default;

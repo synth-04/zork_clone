@@ -6,10 +6,10 @@ class Stanza;
 
 class Game {
     Player* player_;
-    Stanza* current_;
+    Stanza* start_;
 
 public:
-    Game(Player* p, Stanza* start) : player_(p), current_(start) {}
+    Game(Player* p, Stanza* start) : player_(p), start_(start) {}
 
     void loop();
 };

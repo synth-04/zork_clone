@@ -1,26 +1,27 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "type": "cppbuild",
-            "label": "C/C++: g++.exe compila il file attivo",
-            "command": "C:/mingw64/bin/g++.exe",
-            "args": [
-                "-std=c++17",
-                "-Wall",
-                "-I",
-                "include",
-                "src/*.cpp",
-                "-o",
-                "bin/main.exe"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": "build",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "C:/mingw64/bin/g++.exe",
+      "args": [
+        "-std=c++17",
+        "-Wall",
+        "-I", "include",
+        "src/*.cpp",
+        "-o", "bin/main.exe"
+      ],
+      "group": "build",
+      "problemMatcher": ["$gcc"],
+      "options": { "cwd": "${workspaceFolder}" }
+    },
+    {
+      "label": "Run (Terminal)",
+      "type": "shell",
+      "command": "bin/main.exe",
+      "dependsOn": "Build",
+      "options": { "cwd": "${workspaceFolder}" }
+    }
+  ]
 }

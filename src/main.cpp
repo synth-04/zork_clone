@@ -9,11 +9,19 @@
 #include "Evento.h"
 #include "Game.h"
 
+// #define NDEBUG
+
 using namespace std;
 
 int main() {
 
     setlocale(LC_ALL, "it_IT.UTF-8");
+
+    #ifdef NDEBUG
+        std::ios::sync_with_stdio(false);
+        std::cin.tie(nullptr);
+        std::cout << "[DBG] main start\n"; std::cout.flush();
+    #endif
 
         // ======= Creazione stanze ======= //
         // Stanza(nome, descrizione, descrizione_breve)
@@ -31,9 +39,12 @@ int main() {
         
         Stanza* sala_ragni = new Stanza("Sala dei Ragni", "La stanza è avvolta in una fitta ragnatela. Il pavimento è disseminato di ossa di piccoli animali.", "sala buia e piena di ragnatele");
 
+        #ifdef NDEBUG
+            std::cout << "[DBG] create rooms\n"; std::cout.flush();
+        #endif
 
         // ======= Creazione oggetti ======= //
-        // Oggetto(nome, tipo, descrizione_stanza, bonus_hp=0, bonus_mana=0, bonus_str=0, bonus_agi=0, bonus_mind=0, bonus_faith=0)
+        // Oggetto(nome, tipo, descrizione, bonus_hp, bonus_mana, bonus_str, bonus_agi, bonus_mind, bonus_faith)
 
         sala_spada->aggiungiOggetto(new Oggetto
             ("Spada Arrugginita del Guerriero", "arma", 
@@ -45,13 +56,17 @@ int main() {
                 "Una piccola pozione rossa, con un liquido zampillante'.", 
                 20,0,0,0,0,0));
 
+        #ifdef NDEBUG
+            std::cout << "[DBG] create items\n"; std::cout.flush();
+        #endif
+
         // ======= Creazione nemici ======= //
         // Nemico(nome, descrizione, hp, tipo, potenza, danno, flag)
 
         Nemico* drago = new Nemico
             ("Drago", 
             "Un enorme drago rosso con occhi fiammeggianti si erge di fronte a te.", 
-            20, "fisico", 20, 20);
+            40, "fisico", 20, 20);
 
        /* non ancora usati 
 
@@ -77,6 +92,10 @@ int main() {
             "Un enorme ragno con zanne velenose e otto occhi rossi ti osserva minacciosamente.", 
             18, "fisico", 15, 8);
 
+        #ifdef NDEBUG
+            std::cout << "[DBG] create enemies\n"; std::cout.flush();
+        #endif
+
 
         // ======= Creazione eventi ======= //
         // Evento(nome, condizione, effetto, attivato=false)
@@ -87,8 +106,8 @@ int main() {
             },
 
             [ragno](Player& p, Stanza& s) {
-                cout << "Mentre entri nella stanza, un enorme ragno ti salta addosso dalle ombre!\n";
                 p.subisciDanno(5);
+                cout << "Mentre entri nella stanza, un enorme ragno ti salta addosso dalle ombre! Subisci 5 danni!\n";
                 s.aggiungiScontro(ragno);
             }
         );
@@ -98,6 +117,10 @@ int main() {
         // Aggiungi scontro: stanza->aggiungiScontro(nemico)
 
         sala_boss->aggiungiScontro(drago);
+
+        #ifdef NDEBUG
+            std::cout << "[DBG] create events\n"; std::cout.flush();
+        #endif
 
         // ======= Collegamento stanze ======= //
         // Aggiungi uscita: stanza->aggiungiUscita(stanza_adiacente)
@@ -111,20 +134,33 @@ int main() {
         sala_ragni->aggiungiUscita(sala_spada);
         sala_boss->aggiungiUscita(sala_spada);
 
+        #ifdef NDEBUG
+            std::cout << "[DBG] link rooms\n"; std::cout.flush();
+        #endif
+
+
+
         // ======= Creazione player ======= //
         // Player(nome, hp, mana, str, agi, mind, faith, pos)
 
-        string nome;
-
         cout << "Benvenuto nello Zork Clone!\n";
+
+        
         
 
         // Genera statistiche base
 
         Player p;
-
         p.generaPersonaggio();
         p.setPos(entrata); // posizione iniziale
+
+        cout << p.getPos() << "\n";
+
+        #ifdef NDEBUG
+            std::cout << "[DBG] create player\n"; std::cout.flush();
+        #endif
+
+           
 
         // ======= Inizio gioco ======= //
 
@@ -132,7 +168,22 @@ int main() {
         // == Creazione game == //
         
         Game game( &p, entrata);
+
+        #ifdef NDEBUG
+            std::cout << "[DBG] start game loop\n"; std::cout.flush();
+        #endif
+
         game.loop();
+
+        // ======= Pulizia memoria ======= //
+        delete entrata;
+        delete sala_spada;
+        delete sala_boss;
+        delete sala_alchimia;
+        delete sala_ragni;
+        delete drago;
+        delete ragno;
+
 
         return 0;
 }

@@ -8,9 +8,7 @@
 #include <string>
 #include <random>
 
-#include "Stanza.h"
 #include "Oggetto.h"
-#include "Nemico.h"
 
 class Stanza;
 class Oggetto;
@@ -38,7 +36,7 @@ class Player {
 
         Stanza* pos = nullptr; // posizione attuale
 
-        vector<unique_ptr<Oggetto>> inventario;
+        vector<unique_ptr<Oggetto>> inventario_;
 
         /* Ancora non utilizzati */
 
@@ -66,8 +64,14 @@ class Player {
 
         // Costruttore
 
+        Player(const string& n, int h, int m, int s, int a, int mi, int f, Stanza* st) :
+            nome_(n), hp_(h), hp_max_(h), mana_(m), mana_max_(m),
+            str_(s), agi_(a), mind_(mi), faith_(f), pos(st) {}
+
         Player() : nome_("Eroe"), hp_(100), hp_max_(100), mana_(50), mana_max_(50),
                    str_(10), agi_(10), mind_(10), faith_(10), pos(nullptr) {}
+
+
 
         // Metodi getter
 
@@ -78,7 +82,7 @@ class Player {
         int getAgi () const;
         int getMind () const;
         int getFaith () const;
-        Stanza* getPos () { return pos;}
+        Stanza* getPos () const { return pos;}
 
         // Metodi setter
 
@@ -115,7 +119,7 @@ class Player {
         int sommaBonus(F f) const;
 
         // Distruttore
-        ~Player() = default;
+        ~Player();
 };
 
 #endif 

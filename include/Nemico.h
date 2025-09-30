@@ -32,6 +32,9 @@ public:
     void subisciDanno(int d) { hp_ -= d; if (hp_ < 0) hp_ = 0; }
 
     void attacca(Player& p);
+
+    // Distruttore
+    ~Nemico() = default;
 };
 
 #endif

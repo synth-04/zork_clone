@@ -156,9 +156,6 @@ void Stanza::entra(Player& p) {
     if (nemico_) scontro(p); // eventuale scontro
 }
 
-Stanza::~Stanza() {
-    // Nemico non gestito da unique_ptr, quindi lo eliminiamo manualmente
-    delete nemico_;
-}
+Stanza::~Stanza() = default;
 
 
