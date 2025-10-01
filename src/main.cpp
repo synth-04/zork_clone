@@ -26,18 +26,29 @@ int main() {
         // ======= Creazione stanze ======= //
         // Stanza(nome, descrizione, descrizione_breve)
 
-        Stanza* entrata = new Stanza("Entrata", "Sei all'entrata dell'immenso dungeon...", "entrata del dungeon");
+        Stanza* entrata = new Stanza("Entrata", 
+            "Sei all'entrata dell'immenso dungeon...", 
+            "entrata del dungeon");
 
-        entrata->aggiungiAzione("Osserva la porta", "Una grande portone, pieno di sigilli arcani, blocca il tuo cammino. Inspiegabilmente, è aperto. Sembra che qualcuno sia già passato di qui.");
+        entrata->aggiungiAzione("Osserva la porta", 
+            "Una grande portone, pieno di sigilli arcani, blocca il tuo cammino. Inspiegabilmente, è aperto. Sembra che qualcuno sia già passato di qui.");
 
-        Stanza* sala_spada = new Stanza("Sala della Spada", "Ti ritrovi in una piccola stanza, poco dopo il grande portone. Al centro, uno scheletro giace appoggiato ad un pilastro.", "sala della spada");
+        Stanza* sala_spada = new Stanza("Sala della Spada", 
+            "Ti ritrovi in una piccola stanza, poco dopo il grande portone. Al centro, uno scheletro giace appoggiato ad un pilastro.", 
+            "sala della spada");
         
 
-        Stanza* sala_boss = new Stanza("Sala Boss", "Il fuoco inonda questa immensa sala.", "una grande sala illuminata dal fuoco");
+        Stanza* sala_boss = new Stanza("Sala Boss", 
+            "Il fuoco inonda questa immensa sala.", 
+            "una grande sala illuminata dal fuoco");
 
-        Stanza* sala_alchimia = new Stanza("Sala dell'Alchimia", "Questa stanza è piena di strani alambicchi e bottiglie. Molti sono rotti da tempo, altri ancora brillano fosforescenti nell'oscurità.", "sala dell'alchimia");
+        Stanza* sala_alchimia = new Stanza("Sala dell'Alchimia", 
+            "Questa stanza è piena di strani alambicchi e bottiglie. Molti sono rotti da tempo, altri ancora brillano fosforescenti nell'oscurità.", 
+            "sala dell'alchimia");
         
-        Stanza* sala_ragni = new Stanza("Sala dei Ragni", "La stanza è avvolta in una fitta ragnatela. Il pavimento è disseminato di ossa di piccoli animali.", "sala buia e piena di ragnatele");
+        Stanza* sala_ragni = new Stanza("Sala dei Ragni", 
+            "La stanza è avvolta in una fitta ragnatela. Il pavimento è disseminato di ossa di piccoli animali.", 
+            "sala buia e piena di ragnatele");
 
         #ifdef NDEBUG
             std::cout << "[DBG] create rooms\n"; std::cout.flush();
@@ -48,7 +59,7 @@ int main() {
 
         sala_spada->aggiungiOggetto(new Oggetto
             ("Spada Arrugginita del Guerriero", "arma", 
-                "Una spada vecchia e arrugginita giace anch'essa accanto allo scheletro.", 
+                "Una spada vecchia e arrugginita giace accanto allo scheletro.", 
                 0,0,2,0,0,0));
 
         sala_alchimia->aggiungiOggetto(new Oggetto
@@ -68,7 +79,12 @@ int main() {
             "Un enorme drago rosso con occhi fiammeggianti si erge di fronte a te.", 
             40, "fisico", 20, 20);
 
-       /* non ancora usati 
+        Nemico* ragno = new Nemico
+            ("Ragno Gigante", 
+            "Un enorme ragno con zanne velenose e otto occhi rossi ti osserva minacciosamente.", 
+            18, "fisico", 15, 8);
+
+        // ancora da usare
 
         Nemico* goblin = new Nemico
             ("Goblin", 
@@ -85,12 +101,8 @@ int main() {
             "Un potente lich, avvolto in vesti logore e con occhi che brillano di una luce malvagia, ti fissa con disprezzo.", 
             25, "magico", 20, 15);
         
-        */
 
-        Nemico* ragno = new Nemico
-            ("Ragno Gigante", 
-            "Un enorme ragno con zanne velenose e otto occhi rossi ti osserva minacciosamente.", 
-            18, "fisico", 15, 8);
+        
 
         #ifdef NDEBUG
             std::cout << "[DBG] create enemies\n"; std::cout.flush();
@@ -102,7 +114,7 @@ int main() {
 
         Evento attacco_ragno ("Attacco del Ragno",
             [](Player& p, Stanza& s) -> bool {
-                return p.prova(p.getAgi(), 12) && s.getNome() == "Sala dei Ragni";
+                return !(p.prova(p.getAgi(), 20)) && s.getNome() == "Sala dei Ragni";
             },
 
             [ragno](Player& p, Stanza& s) {

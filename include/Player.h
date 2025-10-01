@@ -37,11 +37,11 @@ class Player {
         Stanza* pos = nullptr; // posizione attuale
 
         vector<unique_ptr<Oggetto>> inventario_;
+        vector<string> magie_;
 
         /* Ancora non utilizzati */
 
         // vector<string> skill;
-        // vector<string> magie;
         // vector<string> resistenze;
         // vector<string> debolezze;
         // vector<string> status;
@@ -111,6 +111,7 @@ class Player {
         void interagisciStanza(Stanza& stanza);
         void muovi(Stanza& stanza);
         void attacca(Nemico& n);
+        void usaMagia(Nemico& n);
         void aggiornaStatistiche();
         void generaPersonaggio();
 

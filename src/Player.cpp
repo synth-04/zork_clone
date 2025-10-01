@@ -186,7 +186,8 @@ void Player::equipaggiaOggetto(Oggetto* o) {
     else if (t == "anello") anello_ = o;
     else if (t == "amuleto") amuleto_ = o;
     else { cout << "Non è equipaggiabile.\n"; return; }
-    cout << "Equipaggiato: " << o->getNome() << "\n";
+    
+    // cout << "Equipaggiato: " << o->getNome() << "\n";
 }
 
 // Aggiungi oggetto
