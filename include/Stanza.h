@@ -6,6 +6,7 @@
 #include <utility>
 #include <memory>
 #include <iostream>
+#include <functional>
 
 #include "Oggetto.h"
 #include "Nemico.h"
@@ -16,15 +17,26 @@ using namespace std;
 class Player;
 
 class Stanza {
+
+public:
+    struct Azione {
+        std::string id;      // es. "pickup:Spada" o "osserva_porta"
+        std::string label;   // testo nel menu
+        std::function<void(Player&, Stanza&)> effetto;  // cosa fa
+        std::function<bool(const Player&, const Stanza&)> abilitata; // condizione
+        bool one_shot = false; // se true si rimuove dopo l'esecuzione
+    };
+
+
 private:
     string nome_;
     string descrizione_;
     string descr_breve_;
+
     vector<Stanza*> uscite_;
-    vector<pair<string,string>> azioni_; // {id, msg}
+    vector<Azione> azioni_;
     vector<unique_ptr<Oggetto>> oggetti_stanza_;
     vector <Evento> eventi_;
-    
     Nemico* nemico_ = nullptr;
 
 public:
@@ -53,18 +65,25 @@ public:
     void mostraUscite() const;
     void mostraAzioni() const;
 
-    void aggiungiAzione(const string& id, const string& msg) { azioni_.emplace_back(id, msg); };
-    pair<string,string> scegliAzione(int scelta) const;
+    void aggiungiAzione(std::string id, 
+                        std::string label,
+                        std::function<void(Player&, Stanza&)> effetto,
+                        std::function<bool(const Player&, const Stanza&)> abilitata = nullptr,
+                        bool one_shot = false);
+
+    void aggiungiAzionePickup(const std::string& nome_oggetto,
+                              const std::string& label = "");
+
 
     void aggiungiOggetto(unique_ptr<Oggetto> o);
-    void aggiungiOggetto(Oggetto* o) {
-        if (!o) return;
-        std::string nome = o->getNome();        // leggi prima del trasferimento
-        oggetti_stanza_.emplace_back(o);        // prende possesso con unique_ptr
-        aggiungiAzione("Raccogli " + nome, "Hai raccolto " + nome + ".");
-    }
+    void aggiungiOggetto(Oggetto* o);
     unique_ptr<Oggetto> prendiOggetto(const string& nome);
+    bool haOggetto(const std::string& nome) const;
     void rimuoviOggetto(const string& nome);
+
+    size_t numAzioni() const { return azioni_.size(); }
+    bool eseguiAzioneByIndex(size_t index, Player& p);
+    void rimuoviAzioneById(const std::string& id);
 
     // Eventi
 

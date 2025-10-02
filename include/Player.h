@@ -99,7 +99,7 @@ class Player {
 
         // Azioni
 
-        int prova(int b, int ca);
+        bool prova(int b, int ca);
         void scegliAzione(Stanza& stanza);
         void subisciDanno(int s);
         void curaDanno(int c);

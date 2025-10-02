@@ -33,7 +33,7 @@ int Player::getFaith() const     { return faith_ + sommaBonus(&Oggetto::getBonus
 
 
 // Prove
-int Player::prova(int b, int ca)
+bool Player::prova(int b, int ca)
 {
     static random_device rd;
     static mt19937 gen(rd());
@@ -63,45 +63,28 @@ void Player::scegliAzione(Stanza& stanza) {
 // Interagisci con la stanza
 
 void Player::interagisciStanza(Stanza& stanza) {
-    // Mostra il menu azioni della stanza
     stanza.mostraAzioni();
-    if (true) {
-        cout << "Seleziona azione (numero, 0 per annullare): ";
-        int scelta;
-        if (!(cin >> scelta)) {
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "Input non valido.\n";
-            return;
+    const size_t n = stanza.numAzioni();
+    if (n == 0) return;
+
+    cout << "Scegli azione (1-" << n << ", 0 per annullare): ";
+    int scelta;
+    for (;;) {
+        if (cin >> scelta) {
+            if (scelta == 0) return;
+            if (scelta >= 1 && scelta <= (int)n) break;
         }
-        if (scelta == 0) return;
-
-        // Ottieni {id logico, messaggio} dell’azione scelta
-        auto [id, msg] = stanza.scegliAzione(scelta);
-        if (id.empty()) return; // scelta fuori range già gestita da Stanza
-
-        // Caso: azione di raccolta oggetto
-        if (id.rfind("Raccogli ", 0) == 0) {
-            const string nome = id.substr(9); // dopo "Raccogli "
-            // Sposta l’oggetto dalla stanza all’inventario
-            auto obj = stanza.prendiOggetto(nome);   // unique_ptr<Oggetto>
-            if (obj) {
-                aggiungiOggettoInventario(std::move(obj));
-                if (!msg.empty()) cout << msg << "\n";
-                else cout << "Hai raccolto " << nome << ".\n";
-            } else {
-                cout << "Oggetto non trovato.\n";
-            }
-            return;
-        }
-
-        // Altre azioni "non di raccolta": stampa messaggio o ID
-        if (!msg.empty()) cout << msg << "\n";
-        else cout << id << "\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Input non valido. Riprova: ";
     }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    stanza.eseguiAzioneByIndex((size_t)(scelta - 1), *this);
 }
 
-    // Movimento
+
+// Movimento
 
     void Player::muovi(Stanza& stanza) {
     stanza.mostraUscite();
@@ -202,13 +185,13 @@ void Player::aggiungiOggettoInventario(unique_ptr<Oggetto> o)
 void Player::rimuoviOggettoInventario(Oggetto *o)
 {
     auto& inv = inventario_;
-    auto it = std::remove_if(inv.begin(), inv.end(),
-                             [o](const std::unique_ptr<Oggetto>& ptr){ return ptr.get() == o; });
+    auto it = remove_if(inv.begin(), inv.end(),
+                             [o](const unique_ptr<Oggetto>& ptr){ return ptr.get() == o; });
     if (it != inv.end()) {
-        std::cout << o->getNome() << " rimosso dall'inventario.\n";
+        cout << o->getNome() << " rimosso dall'inventario.\n";
         inv.erase(it, inv.end());
     } else {
-        std::cout << "Oggetto non trovato nell'inventario.\n";
+        cout << "Oggetto non trovato nell'inventario.\n";
     }
 }
 

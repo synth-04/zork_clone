@@ -1,7 +1,7 @@
 #include "Stanza.h"
 #include "Player.h"
 
-
+#include <functional>
 #include <algorithm>
 
 using namespace std;
@@ -9,9 +9,8 @@ using namespace std;
 // Mostra stanza
 
 void Stanza::mostra() const {
-    cout << "\n== " << nome_ << " ==\n";
+    cout << "\n=== " << nome_ << " ===\n";
     cout << descrizione_ << "\n";
-
     if (!oggetti_stanza_.empty()) {
         cout << "Nella stanza vedi:\n";
         for (auto const& o : oggetti_stanza_) {
@@ -19,6 +18,15 @@ void Stanza::mostra() const {
         }
     }
 }
+
+// Entra in stanza
+
+void Stanza::entra(Player& p) {
+    mostra();           // descrizione
+    triggerEventi(p);   // eventi scriptati
+    if (nemico_) scontro(p); // eventuale scontro
+}
+
 
 // Mostra uscite
 
@@ -33,37 +41,109 @@ void Stanza::mostraUscite() const {
     }
 }
 
+// == AZIONI ==
+
+// Aggiungi azione
+
+void Stanza::aggiungiAzione(string id, 
+                            string label,
+                            function<void(Player&, Stanza&)> effetto,
+                            function<bool(const Player&, const Stanza&)> abilitata,
+                            bool one_shot) {
+        azioni_.push_back(Azione{
+        move(id), 
+        move(label),
+        move(effetto), 
+        move(abilitata), 
+        one_shot
+    });
+}
+
+// Aggiungi azione pickup
+
+void Stanza::aggiungiAzionePickup(const string& nome_oggetto,
+                                  const string& label) {
+    const string id  = "pickup:" + nome_oggetto;
+    const string lab = !label.empty() ? label : ("Raccogli " + nome_oggetto);
+
+    aggiungiAzione(
+        id, lab,
+        // effetto (si esegue SOLO dopo la scelta):
+        [nome_oggetto](Player& p, Stanza& s) {
+            auto obj = s.prendiOggetto(nome_oggetto);
+            if (obj) {
+                p.aggiungiOggettoInventario(move(obj));
+                cout << "Hai raccolto " << nome_oggetto << ".\n";
+            } else {
+                cout << "Non trovi " << nome_oggetto << ".\n";
+            }
+        },
+        // abilitata (nessun side-effect):
+        [nome_oggetto](const Player&, const Stanza& s) {
+            return s.haOggetto(nome_oggetto);
+        },
+        true
+    );
+}
+
 // Mostra azioni
 
 void Stanza::mostraAzioni() const {
-    if (azioni_.empty()) {
-        cout << "Non ci sono azioni disponibili in questa stanza.\n";
-        return;
-    }
-    cout << "Azioni disponibili:\n";
+    if (azioni_.empty()) { cout << "Non ci sono azioni disponibili.\n"; return; }
+    cout << "Azioni:\n";
     for (size_t i = 0; i < azioni_.size(); ++i) {
-        cout << (i+1) << ". " << azioni_[i].first << "\n";
+        cout << (i+1) << ". " << azioni_[i].label << "\n";
     }
 }
 
 // Scegli azione
 
-pair<string,string> Stanza::scegliAzione(int scelta) const {
-    if (scelta < 1 || scelta > (int)azioni_.size()) {
-        cout << "Azione non disponibile.\n";
-        return {"",""};
+bool Stanza::eseguiAzioneByIndex(size_t index, Player& p) {
+    if (index >= azioni_.size()) { cout << "Scelta non valida.\n"; return false; }
+    auto &a = azioni_[index];
+
+    if (a.abilitata && !a.abilitata(p, *this)) {
+        cout << "Non puoi farlo ora.\n";
+        return false;
     }
-    return azioni_[scelta-1]; // {id, msg}
+
+    a.effetto(p, *this);
+
+    if (a.one_shot) {
+        azioni_.erase(azioni_.begin() + static_cast<long long>(index));
+    }
+    return true;
+}
+
+void Stanza::rimuoviAzioneById(const string& id) {
+    azioni_.erase(
+        remove_if(azioni_.begin(), azioni_.end(),
+                  [&](const Azione& a){ return a.id == id; }),
+        azioni_.end()
+    );
 }
 
 // Aggiungi oggetto
 
 void Stanza::aggiungiOggetto(unique_ptr<Oggetto> o) {
+    if (!o) return;
+    const string nome = o->getNome();
     oggetti_stanza_.push_back(move(o));
-    string id = "Raccogli " + o->getNome();
-    string msg = "Hai raccolto " + o->getNome() + ".";
-    aggiungiAzione(id, msg);
+    aggiungiAzionePickup(nome);
+}
 
+void Stanza::aggiungiOggetto(Oggetto* o) {
+    if (!o) return;
+    const string nome = o->getNome();
+    oggetti_stanza_.emplace_back(o);
+    aggiungiAzionePickup(nome);
+}
+
+// Controlla se la stanza ha un oggetto
+
+bool Stanza::haOggetto(const string& nome) const {
+    for (auto const& o : oggetti_stanza_) if (o->getNome() == nome) return true;
+    return false;
 }
 
 // Prendi oggetto
@@ -71,9 +151,9 @@ void Stanza::aggiungiOggetto(unique_ptr<Oggetto> o) {
 unique_ptr<Oggetto> Stanza::prendiOggetto(const string& nome) {
     for (auto it = oggetti_stanza_.begin(); it != oggetti_stanza_.end(); ++it) {
         if ((*it)->getNome() == nome) {
-            unique_ptr<Oggetto> trovato = move(*it);
+            auto out = move(*it);
             oggetti_stanza_.erase(it);
-            return trovato;
+            return out;
         }
     }
     return nullptr;
@@ -86,12 +166,8 @@ void Stanza::rimuoviOggetto(const string& nome) {
                         [&nome](const unique_ptr<Oggetto>& o) { return o->getNome() == nome; });
     if (it != oggetti_stanza_.end()) {
         oggetti_stanza_.erase(it, oggetti_stanza_.end());
-        // Rimuovi azione associata
-        azioni_.erase(remove_if(azioni_.begin(), azioni_.end(),
-                                [&nome](const pair<string,string>& a) {
-                                    return a.first == "Raccogli " + nome;
-                                }), azioni_.end());
     }
+    rimuoviAzioneById("pickup:" + nome);
 }
 
 // Trigger eventi
@@ -145,15 +221,6 @@ void Stanza::scontro(Player& p) {
         cout << nemico_->getNome() << " è stato sconfitto!\n";
         nemico_ = nullptr; // rimuove il nemico dalla stanza
     }
-}
-
-
-// Quando il player entra
-
-void Stanza::entra(Player& p) {
-    mostra();           // descrizione
-    triggerEventi(p);   // eventi scriptati
-    if (nemico_) scontro(p); // eventuale scontro
 }
 
 Stanza::~Stanza() = default;
