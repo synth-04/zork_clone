@@ -16,6 +16,9 @@ void Stanza::mostra() const {
         for (auto const& o : oggetti_stanza_) {
             cout << "- " << o->getNome() << ": " << o->getDescrizioneStanza() << "\n";
         }
+        for (auto const& m : magia_stanza_) {
+            cout << "- " << m->getNome() << ": " << m->getDescrizione() << "\n";
+        }
     }
 }
 
@@ -86,6 +89,40 @@ void Stanza::aggiungiAzionePickup(const string& nome_oggetto,
     );
 }
 
+// Aggiungi azione apprendi magia
+
+void Stanza::aggiungiAzioneMagia(const string& nome_magia,
+                                  const string& label) {
+    const string id  = "learn:" + nome_magia;
+    const string lab = !label.empty() ? label : ("Leggi il tomo di " + nome_magia);
+
+    aggiungiAzione(
+        id, lab,
+        // effetto (si esegue SOLO dopo la scelta):
+        [nome_magia](Player& p, Stanza& s) {
+            auto obj = s.prendiMagia(nome_magia);
+            if (obj) {
+                p.aggiungiMagiaGrimorio(move(obj));
+                cout << "Hai appreso " << nome_magia << ".\n";
+            } else {
+                cout << "Non trovi " << nome_magia << ".\n";
+            }
+        },
+        // abilitata (nessun side-effect):
+        [nome_magia](const Player&, const Stanza& s) {
+            return s.haMagia(nome_magia);
+        },
+        true
+    );
+}
+
+// Controlla se la stanza ha una magia
+
+bool Stanza::haMagia(const string& nome) const {
+    for (auto const& m : magia_stanza_) if (m->getNome() == nome) return true;
+    return false;
+}
+
 // Mostra azioni
 
 void Stanza::mostraAzioni() const {
@@ -139,6 +176,22 @@ void Stanza::aggiungiOggetto(Oggetto* o) {
     aggiungiAzionePickup(nome);
 }
 
+// Aggiungi Magie
+
+void Stanza::aggiungiMagia(unique_ptr<Magia> m) {
+    if (!m) return;
+    const string nome = m->getNome();
+    magia_stanza_.push_back(move(m));
+    aggiungiAzioneMagia(nome);
+}
+
+void Stanza::aggiungiMagia(Magia* m) {
+    if (!m) return;
+    const string nome = m->getNome();
+    magia_stanza_.emplace_back(m);
+    aggiungiAzioneMagia(nome);
+}
+
 // Controlla se la stanza ha un oggetto
 
 bool Stanza::haOggetto(const string& nome) const {
@@ -153,6 +206,19 @@ unique_ptr<Oggetto> Stanza::prendiOggetto(const string& nome) {
         if ((*it)->getNome() == nome) {
             auto out = move(*it);
             oggetti_stanza_.erase(it);
+            return out;
+        }
+    }
+    return nullptr;
+}
+
+// Prendi magia
+
+unique_ptr<Magia> Stanza::prendiMagia(const string& nome) {
+    for (auto it = magia_stanza_.begin(); it != magia_stanza_.end(); ++it) {
+        if ((*it)->getNome() == nome) {
+            auto out = move(*it);
+            magia_stanza_.erase(it);
             return out;
         }
     }
@@ -194,12 +260,14 @@ void Stanza::scontro(Player& p) {
         // Turno player
         cout << "Scegli un'azione:\n";
         cout << "a. Attacca \n";
+        cout << "m. Usa magia \n";
         cout << "i. Inventario \n";
 
         char scelta;
         cin >> scelta;
         switch(scelta) {
             case 'a': p.attacca(*nemico_); break;
+            case 'm': p.usaMagia(*nemico_); break;
             case 'i': p.gestisciInventario(); break;
             default: 
                 cout << "Azione non valida.\n";

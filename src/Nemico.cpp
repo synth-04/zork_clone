@@ -10,17 +10,17 @@ void Nemico::attacca(Player& p) {
 
         if (getTipo() == "fisico") // fisico
 
-        {int bonus_fisico = p.getAgi()/2;
+        {int bonus_fisico = p.getAgi();
             p.prova(bonus_fisico, potenza_) ? danno_ = 0 : danno_ = danno_;}
 
         else if (getTipo() == "magico") // magico
 
-        {int bonus_magico = p.getMind()/2;
+        {int bonus_magico = p.getMind();
             p.prova(bonus_magico, potenza_) ? danno_ = 0 : danno_ = danno_;}
 
         else if (getTipo() == "sacrilego") // sacrilego
         
-        {int bonus_sacrilego = p.getFaith()/2;
+        {int bonus_sacrilego = p.getFaith();
             p.prova(bonus_sacrilego, potenza_) ? danno_ = 0 : danno_ = danno_;}
         // esito attacco
 

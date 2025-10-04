@@ -9,10 +9,12 @@
 #include <random>
 
 #include "Oggetto.h"
+#include "Magia.h"
 
 class Stanza;
 class Oggetto;
 class Nemico;
+class Magia;
 
 using namespace std;
 
@@ -37,7 +39,7 @@ class Player {
         Stanza* pos = nullptr; // posizione attuale
 
         vector<unique_ptr<Oggetto>> inventario_;
-        vector<string> magie_;
+        vector<unique_ptr<Magia>> magie_;
 
         /* Ancora non utilizzati */
 
@@ -83,6 +85,9 @@ class Player {
         int getMind () const;
         int getFaith () const;
         Stanza* getPos () const { return pos;}
+        int getManaBase() const { return mana_; }
+        int getManaVisibile() const { return mana_ + sommaBonus(&Oggetto::getBonusMana); }
+        bool spendiMana(int costo);
 
         // Metodi setter
 
@@ -107,6 +112,7 @@ class Player {
         void equipaggiaOggetto(Oggetto* o);
         void aggiungiOggettoInventario(unique_ptr<Oggetto> o);
         void rimuoviOggettoInventario(Oggetto* o);
+        void aggiungiMagiaGrimorio(unique_ptr<Magia> m);
         void gestisciInventario();
         void interagisciStanza(Stanza& stanza);
         void muovi(Stanza& stanza);

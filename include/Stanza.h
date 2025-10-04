@@ -11,6 +11,7 @@
 #include "Oggetto.h"
 #include "Nemico.h"
 #include "Evento.h"
+#include "Magia.h"
 
 using namespace std;
 
@@ -36,6 +37,7 @@ private:
     vector<Stanza*> uscite_;
     vector<Azione> azioni_;
     vector<unique_ptr<Oggetto>> oggetti_stanza_;
+    vector<unique_ptr<Magia>> magia_stanza_;
     vector <Evento> eventi_;
     Nemico* nemico_ = nullptr;
 
@@ -74,10 +76,18 @@ public:
     void aggiungiAzionePickup(const std::string& nome_oggetto,
                               const std::string& label = "");
 
+    void aggiungiAzioneMagia(const string& nome_magia,
+                            const string& label = "");
+
+    bool haMagia(const std::string& nome) const;
+
 
     void aggiungiOggetto(unique_ptr<Oggetto> o);
     void aggiungiOggetto(Oggetto* o);
+    void aggiungiMagia(unique_ptr<Magia> m);
+    void aggiungiMagia(Magia* m);
     unique_ptr<Oggetto> prendiOggetto(const string& nome);
+    unique_ptr<Magia> prendiMagia(const string& nome);
     bool haOggetto(const std::string& nome) const;
     void rimuoviOggetto(const string& nome);
 

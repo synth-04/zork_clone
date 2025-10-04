@@ -6,6 +6,7 @@
 #include "Player.h"
 #include "Stanza.h"
 #include "Oggetto.h"
+#include "Magia.h"
 #include "Nemico.h"
 #include "Evento.h"
 #include "Game.h"
@@ -41,14 +42,14 @@ int main() {
             "sala buia e piena di ragnatele");
 
         // ==== Creazione azioni aggiuntive ===== //
-        // 
+        // id, label, effetto, condizione(nullptr se non presente), one-shot (true se sparisce una volta attivato)
 
         entrata->aggiungiAzione(
                     "osserva_porta",
                     "Osserva la porta",
                     [](Player& p, Stanza& s){
-                        if (p.prova(p.getMind()/2, 20)) {
-                            cout << "Noti l'araldica del casato Lathander, estinto da secoli.\n";
+                        if (p.prova(p.getMind()/2, 15)) {
+                            cout << "Noti l'araldica del casato Lathander, estinto da secoli. Il Leone d'Oro simboleggiava il suo potere.\n";
                         } else {
                             cout << "Non riesci a ricordare nulla di utile su quel portone.\n";
                         }
@@ -70,13 +71,27 @@ int main() {
                 "Una piccola pozione rossa, con un liquido zampillante'.", 
                 20,0,0,0,0,0));
 
+        sala_alchimia->aggiungiOggetto (new Oggetto
+        ("Bastone dell'Eremita", "arma", "Un vecchio bastone logoro. Sembra possedere potere arcano sopito.",
+        0, 0, 0, 0, 3, 2));
+
+        // ======= Creazione magie ====== //
+        // Magia(nome, descrizione, costo_mana, effetto, tipo)
+
+        sala_alchimia->aggiungiMagia(new Magia
+            ("Dardo di fuoco", "Una magia che lancia un dardo di fuoco contro l'avversario.", 5,
+            [](Player& p, Nemico& n) {
+                n.subisciDanno(p.getMind());
+                cout << "Colpisci con il tuo dardo infuocato e infliggi " << p.getMind() << " danni \n";
+            }, "arcano"));
+
         // ======= Creazione nemici ======= //
         // Nemico(nome, descrizione, hp, tipo, potenza, danno, flag)
 
         Nemico* drago = new Nemico
             ("Drago", 
             "Un enorme drago rosso con occhi fiammeggianti si erge di fronte a te.", 
-            40, "fisico", 20, 20);
+            40, "fisico", 20, 30);
 
         Nemico* ragno = new Nemico
             ("Ragno Gigante", 

@@ -38,6 +38,7 @@ bool Player::prova(int b, int ca)
     static random_device rd;
     static mt19937 gen(rd());
     uniform_int_distribution<> dist(1, 20);
+    // cout << "Risultato test:  " << dist(gen) + b << "vs " << ca << "\n"; // Debug
     return dist(gen) + b >= ca;
 }
 
@@ -86,7 +87,7 @@ void Player::interagisciStanza(Stanza& stanza) {
 
 // Movimento
 
-    void Player::muovi(Stanza& stanza) {
+void Player::muovi(Stanza& stanza) {
     stanza.mostraUscite();
     int scelta; cin >> scelta;
     const auto& uscite = stanza.getUscite();
@@ -100,23 +101,71 @@ void Player::interagisciStanza(Stanza& stanza) {
 
 // ======= Combattimento =======
 
-    void Player::attacca(Nemico & n)
+void Player::attacca(Nemico & n){
+
+        // Attacco base
+
+        int danno_ = getStr()*2;
+        prova(getAgi(), n.getPotenza()) ? danno_ = 0 : danno_ = danno_;
+        
+        if (danno_ == 0) {
+        cout << "Attacchi " << n.getNome() << " ma manchi il colpo!\n";
+        return;
+    }
+    else {
+        cout << "Colpisci " << n.getNome() << " e infliggi " << danno_ << " danni.\n";
+        n.subisciDanno(danno_);
+    }
+}
+
+void Player::usaMagia(Nemico& n){
+
+    if (magie_.empty())
     {
-
-        // Attacco base (da modificare)
-
-        int danno = getStr();
-        cout << "Attacchi " << n.getNome() << " e infliggi " << danno << " danni.\n";
-        n.subisciDanno(danno);
+        cout << "Il tuo grimorio è vuoto.\n";
+        return;
     }
 
-    // Subisci danno
+    cout << "Grimorio:\n";
+    for (size_t i = 0; i < magie_.size(); i++)
+    {
+        cout << i + 1 << ". " << magie_[i]->getNome() << "\n";
+    }
+    cout << "0. Annulla\n";
+
+    int scelta;
+    while (true)
+    {
+        cout << "Usa una magia (numero): ";
+        if (!(cin >> scelta))
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Input non valido. Inserisci un numero.\n";
+            continue;
+        }
+        if (scelta < 0 || scelta > (int)magie_.size())
+        {
+            cout << "Scelta non possibile. Riprova.\n";
+            continue;
+        }
+        break;
+    }
+    if (scelta > 0 && scelta <= (int)magie_.size())
+    {
+        magie_[scelta - 1]->usa(*this, n);
+    }
+}
+
+// Subisci danno
+
 void Player::subisciDanno(int s)
 {
     hp_ -= s;
 }
 
 // Cura danno
+
 void Player::curaDanno(int c)
 {
     // Cura fino al massimo degli hp base
@@ -131,6 +180,7 @@ void Player::curaDanno(int c)
 }
 
 // Cura mana
+
 void Player::curaMana(int c)
 {
     if (mana_ + c > mana_max_)
@@ -141,6 +191,15 @@ void Player::curaMana(int c)
     {
         mana_ += c;
     }
+}
+
+// Usa mana per magie
+
+bool Player::spendiMana(int costo) {
+    if (costo <= 0) return true;
+    if (mana_ < costo) return false;
+    mana_ -= costo;
+    return true;
 }
 
 // ==Inventario e personaggio==
@@ -159,19 +218,31 @@ void Player::aggiornaStatistiche()
 
     }
 
-// Equipaggia oggetto
 void Player::equipaggiaOggetto(Oggetto* o) {
-    if (!o) { cout << "Oggetto non valido.\n"; return; }
-    const string& t = o->getTipo();
-    if (t == "arma") arma_ = o;
-    else if (t == "armatura") armatura_ = o;
-    else if (t == "scudo") scudo_ = o;
-    else if (t == "anello") anello_ = o;
-    else if (t == "amuleto") amuleto_ = o;
-    else { cout << "Non è equipaggiabile.\n"; return; }
-    
-    // cout << "Equipaggiato: " << o->getNome() << "\n";
+    if (!o) { 
+        std::cout << "Oggetto non valido.\n"; 
+        return; 
+    }
+
+    const std::string& t = o->getTipo();
+    Oggetto** slot = nullptr;
+
+    if      (t == "arma")     slot = &arma_;
+    else if (t == "armatura") slot = &armatura_;
+    else if (t == "scudo")    slot = &scudo_;
+    else if (t == "anello")   slot = &anello_;
+    else if (t == "amuleto")  slot = &amuleto_;
+    else {
+        std::cout << "Non è equipaggiabile.\n";
+        return;
+    }
+    if (*slot && *slot != o) {
+        std::cout << "Riponi " << (*slot)->getNome() << " nello zaino.\n";
+    }
+    *slot = o;
+    std::cout << "Hai equipaggiato: " << o->getNome() << "\n";
 }
+
 
 // Aggiungi oggetto
 
@@ -179,6 +250,14 @@ void Player::aggiungiOggettoInventario(unique_ptr<Oggetto> o)
 {
     inventario_.push_back(move(o));
     cout << inventario_.back()->getNome() << " aggiunto all'inventario.\n";
+}
+
+// Aggiungi magia al grimorio
+
+void Player::aggiungiMagiaGrimorio(unique_ptr<Magia> m)
+{
+    magie_.push_back(move(m));
+    cout << magie_.back()->getNome() << " aggiunto al grimorio.\n";
 }
 
 // Rimuovi oggetto
@@ -206,7 +285,7 @@ void Player::gestisciInventario()
 
     cout << "\nStatistiche di " << getNome() << ":\n";
     cout << "HP: \t\t" << getHp() << "\n";
-    cout << "Mana: \t\t" << getMana() << "\n";
+    cout << "Mana: \t\t" << getManaVisibile() << "(" << getManaBase() << ")" << "\n";
     cout << "Forza: \t\t" << getStr() << "\n";
     cout << "Agilità: \t" << getAgi() << "\n";
     cout << "Mente: \t\t" << getMind() << "\n";
@@ -273,7 +352,7 @@ void Player::gestisciInventario()
 
         static random_device rd;
         static mt19937 gen(rd());
-        uniform_int_distribution<> dist(5, 20);
+        uniform_int_distribution<> dist(1, 10);
 
         do {
 
@@ -282,7 +361,7 @@ void Player::gestisciInventario()
         mind_ = dist(gen);
         faith_ = dist(gen);
 
-        } while (str_ + agi_ + mind_ + faith_ != 40);
+        } while (str_ + agi_ + mind_ + faith_ != 20);
 
         hp_ = 50 + str_ * 2;
         setHpMax(hp_);
