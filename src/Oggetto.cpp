@@ -6,14 +6,15 @@
 
 using namespace std;
 
-void Oggetto::usa(Player& p) {
+bool Oggetto::usa(Player& p) {
 
             // Pozione
             if (getTipo() == "pozione") {
                 cout << "Usi " << getNome() << ". " << "\n";
                 p.curaDanno(getBonusHp());
                 p.curaMana(getBonusMana());
-                p.rimuoviOggettoInventario(this);               
+                return true;
+                // p.rimuoviOggettoInventario(this);               
             
             } 
             // Equipaggiamento
@@ -21,9 +22,11 @@ void Oggetto::usa(Player& p) {
             else if (getTipo() == "arma" || getTipo() == "armatura" || getTipo() == "scudo" || getTipo() == "anello" || getTipo() == "amuleto") {
                 cout << "Equipaggi " << getNome() << ". " << "\n";
                 p.equipaggiaOggetto(this);
+                return false;
 
             } else {
             cout << "Non puoi usarlo ora. " << "\n";
+            return false;
         }
 
 };

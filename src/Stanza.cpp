@@ -42,6 +42,7 @@ void Stanza::mostraUscite() const {
     for (size_t i = 0; i < uscite_.size(); i++) {
         cout << i+1 << ". Vai verso " << uscite_[i]->getDescrizioneBreve() << "\n";
     }
+    cout << "0. Annulla \n";
 }
 
 // == AZIONI ==

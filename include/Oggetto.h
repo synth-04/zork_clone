@@ -41,7 +41,7 @@ public:
     const string& getDescrizioneStanza() const { return descrizioneStanza_; }
 
     // Azione quando l'oggetto viene usato o equipaggiato
-    void usa(Player& p);
+    bool usa(Player& p);
 
     // Factory helper
     template<class T, class...Args>

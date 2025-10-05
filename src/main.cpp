@@ -30,15 +30,15 @@ int main() {
         
 
         Stanza* sala_boss = new Stanza("Sala Boss", 
-            "Il fuoco inonda questa sala gigantesca.", 
-            "una grande sala illuminata dal fuoco");
+            "La luce delle torce illumina questa stanza gigantesca. Odore di carcasse in putrefazione inonda la stanza.", 
+            "una grande sala illuminata dalle torce");
 
         Stanza* sala_alchimia = new Stanza("Sala dell'Alchimia", 
             "Questa stanza è piena di strani alambicchi e bottiglie. Molti sono rotti da tempo, altri ancora brillano fosforescenti nell'oscurità.", 
             "sala dell'alchimia");
         
         Stanza* sala_ragni = new Stanza("Sala dei Ragni", 
-            "La stanza è avvolta in una fitta ragnatela. Il pavimento è disseminato di ossa di piccoli animali.", 
+            "La stanza è avvolta in una fitta ragnatela. Il pavimento è disseminato di ossa di piccoli animali. Alcuni avventurieri sono caduti nella trappola degli aracnidi...fortunatamente, è possibile recuperare i loro averi.", 
             "sala buia e piena di ragnatele");
 
         // ==== Creazione azioni aggiuntive ===== //
@@ -64,38 +64,53 @@ int main() {
         sala_spada->aggiungiOggetto(new Oggetto
             ("Spada Arrugginita del Guerriero", "arma", 
                 "Una spada vecchia e arrugginita giace accanto allo scheletro.", 
-                0,0,2,0,0,0));
+                0, 0, 2, 0, 0, 0));
 
         sala_alchimia->aggiungiOggetto(new Oggetto
-            ("Pozione di Cura Minore", "pozione", 
-                "Una piccola pozione rossa, con un liquido zampillante'.", 
-                20,0,0,0,0,0));
+            ("Pozione di Guarigione", "pozione", 
+                "Una piccola pozione rossa, con un liquido zampillante.", 
+                30, 0, 0,0,0,0));
 
         sala_alchimia->aggiungiOggetto (new Oggetto
-        ("Bastone dell'Eremita", "arma", "Un vecchio bastone logoro. Sembra possedere potere arcano sopito.",
-        0, 0, 0, 0, 3, 2));
+            ("Bastone dell'Eremita", "arma", 
+            "Un vecchio bastone logoro. Sembra possedere potere arcano sopito.",
+            0, 0, 0, 0, 3, 2));
+
+        sala_ragni->aggiungiOggetto ( new Oggetto
+            ("Armatura a piastre", "armatura", 
+            "Un'armatura a piastre, appartenuta ad uno sfortunato avventuriero.",
+            20, 0, 0, -2, 0, 0));
 
         // ======= Creazione magie ====== //
         // Magia(nome, descrizione, costo_mana, effetto, tipo)
 
-        sala_alchimia->aggiungiMagia(new Magia
-            ("Dardo di fuoco", "Una magia che lancia un dardo di fuoco contro l'avversario.", 5,
+        Magia* dardo_forza = (new Magia
+            ("Dardo di forza", "Una magia che lancia un dardo di forza cosmica contro l'avversario.", 7,
             [](Player& p, Nemico& n) {
-                n.subisciDanno(p.getMind());
-                cout << "Colpisci con il tuo dardo infuocato e infliggi " << p.getMind() << " danni \n";
+                if (p.getMind() >= 5)
+                {
+                    n.subisciDanno(p.getMind());
+                    cout << "Colpisci con il tuo dardo incantato e infliggi " << p.getMind() << " danni \n";
+                }
+                else 
+                {
+                    cout << "Provi a lanciare la magia, ma le tua abilità arcane sono insufficienti. \n";
+                }
             }, "arcano"));
+
+        sala_alchimia->aggiungiMagia(dardo_forza);
 
         // ======= Creazione nemici ======= //
         // Nemico(nome, descrizione, hp, tipo, potenza, danno, flag)
 
         Nemico* drago = new Nemico
-            ("Drago", 
-            "Un enorme drago rosso con occhi fiammeggianti si erge di fronte a te.", 
+            ("Viverna", 
+            "Un enorme viverna si erge di fronte a te: una creatura dall'aspetto di rettile, con due ali squamate, due possenti arti inferiori e una coda con aculei. La viverna si prepara a renderti il suo prossimo pasto.", 
             40, "fisico", 20, 30);
 
         Nemico* ragno = new Nemico
             ("Ragno Gigante", 
-            "Un enorme ragno con zanne velenose e otto occhi rossi ti osserva minacciosamente.", 
+            "Il ragno, con zanne grondanti di veleno e otto occhi rossi, ti osserva minacciosamente, pronto a colpire di nuovo.", 
             18, "fisico", 15, 8);
 
         // ancora da usare
@@ -120,12 +135,12 @@ int main() {
 
         Evento attacco_ragno ("Attacco del Ragno",
             [](Player& p, Stanza& s) -> bool {
-                return !(p.prova(p.getAgi()/2, 12)) && s.getNome() == "Sala dei Ragni";
+                return !(p.prova(p.getAgi(), 15)) && s.getNome() == "Sala dei Ragni";
             },
 
             [ragno](Player& p, Stanza& s) {
                 p.subisciDanno(5);
-                cout << "Mentre entri nella stanza, un enorme ragno ti salta addosso dalle ombre! Subisci 5 danni!\n";
+                cout << "Mentre osservi la stanza, un enorme ragno ti salta addosso dalle ombre! Subisci 5 danni!\n";
                 s.aggiungiScontro(ragno);
             }
         );

@@ -89,12 +89,14 @@ void Player::interagisciStanza(Stanza& stanza) {
 
 void Player::muovi(Stanza& stanza) {
     stanza.mostraUscite();
-    int scelta; cin >> scelta;
+    int scelta; 
+    cin >> scelta;
     const auto& uscite = stanza.getUscite();
     if (scelta >= 1 && scelta <= (int)uscite.size()) {
         setPos(uscite[scelta-1]);
         // getPos()->entra(*this);
-    } else {
+    } else if  (scelta == 0) return;
+    else {
         cout << "Uscita non valida.\n";
     }
 }
@@ -169,28 +171,19 @@ void Player::subisciDanno(int s)
 void Player::curaDanno(int c)
 {
     // Cura fino al massimo degli hp base
-    if (hp_ + c > hp_max_)
-    {
-        hp_ = hp_max_;
-    }
-    else
-    {
-        hp_ += c;
-    }
+    if (c <= 0) return;
+    int maxVis = getHpMaxVisibile();
+    hp_ += c;             // curi la base
+    if (hp_ > maxVis) hp_ = maxVis;
 }
 
 // Cura mana
 
-void Player::curaMana(int c)
-{
-    if (mana_ + c > mana_max_)
-    {
-        mana_ = mana_max_;
-    }
-    else
-    {
-        mana_ += c;
-    }
+void Player::curaMana(int cura) {
+    if (cura <= 0) return;
+    int maxVis = getManaMaxVisibile();
+    mana_ += cura;             // curi la base
+    if (mana_ > maxVis) mana_ = maxVis;
 }
 
 // Usa mana per magie
@@ -203,6 +196,13 @@ bool Player::spendiMana(int costo) {
 }
 
 // ==Inventario e personaggio==
+
+void Player::cambioEquip() {
+    int maxVis = getManaMaxVisibile();
+    if (mana_ > maxVis) mana_ = maxVis;
+    maxVis = getHpMaxVisibile();
+    if (hp_ > maxVis) hp_ = maxVis;
+}
 
 // Aggiorna statistiche
     
@@ -241,6 +241,7 @@ void Player::equipaggiaOggetto(Oggetto* o) {
     }
     *slot = o;
     std::cout << "Hai equipaggiato: " << o->getNome() << "\n";
+    cambioEquip();
 }
 
 
@@ -284,12 +285,27 @@ void Player::gestisciInventario()
     // Statistiche player
 
     cout << "\nStatistiche di " << getNome() << ":\n";
-    cout << "HP: \t\t" << getHp() << "\n";
-    cout << "Mana: \t\t" << getManaVisibile() << "(" << getManaBase() << ")" << "\n";
+    cout << "Classe: \t\t" << getClasse() << "\n";
+    cout << "HP: \t\t" << getHpVisibile() << "(" << getHpMaxVisibile() << ")"<< "\n";
+    cout << "Mana: \t\t" << getManaVisibile() << "(" << getManaMaxVisibile() << ")" << "\n";
     cout << "Forza: \t\t" << getStr() << "\n";
     cout << "Agilità: \t" << getAgi() << "\n";
     cout << "Mente: \t\t" << getMind() << "\n";
     cout << "Fede: \t\t" << getFaith() << "\n\n";
+
+    // Grimorio
+
+    if (magie_.empty())
+    {
+        cout << "Il tuo grimorio è vuoto.\n";
+    }
+    else
+    {
+        for (size_t i = 0; i < magie_.size(); i++)
+    {
+        cout << i + 1 << ". " << magie_[i]->getNome() << "\n";
+    }
+    }
 
     // Equipaggiamento
 
@@ -333,8 +349,13 @@ void Player::gestisciInventario()
     }
     if (scelta > 0 && scelta <= (int)inventario_.size())
     {
-        inventario_[scelta - 1]->usa(*this);
+        const size_t idx = static_cast<size_t>(scelta - 1);
+        // Chiama usa e, SE consumato, rimuovi l’elemento
+        bool consumato = inventario_[idx]->usa(*this);
+        if (consumato) {
+        inventario_.erase(inventario_.begin() + static_cast<long long>(idx));
     }
+}
 }
 
 // == Generazione personaggio ==
@@ -343,12 +364,72 @@ void Player::gestisciInventario()
     {
 
 
-        string nome;
+        string nome, classe;
         cout << "Inserisci il nome del tuo eroe: ";
         cout.flush();
         cin >> nome;
 
         setNome(nome);
+
+        cout << "Scegli la tua classe: \n\n";
+
+        cout << "1. Guerriero \n\n";
+        cout << "Un combattente abile nel corpo a corpo. Possiede una grande resistenza e una discreta agilità, ma non possiede abilità magiche particolari.\n\n";
+
+        cout << "2. Ladro \n\n";
+        cout << "Scaltro e veloce, il ladro si muove veloce durante il combattimento. I ladri sono abili scassinatori e borseggiatori. \n\n";
+
+        cout << "3. Mago \n\n";
+        cout << "Il mago è un abile incantatore arcano. Sei addestrato nell'uso della magia, ma sei limitato nel combattimento corpo a corpo. \n\n";
+
+        cout << "4. Sacerdote di Lumen \n\n";
+        cout << "I sacerdoti di Lumen sono esperti guaritori ed esperti della magia della luce. Possono combattere, ma non lo fanno volentieri. \n\n";
+
+        int scelta_classe;
+
+        do 
+        {
+        cout << "Inserisci la tua scelta (numero): ";
+        cin >> scelta_classe;
+
+        switch (scelta_classe)
+        {
+            case 1:
+                setClasse("Guerriero");
+                str_ = 8;
+                agi_ = 6;
+                mind_ = 0;
+                faith_ = 0;
+                break;
+            case 2:
+                setClasse("Ladro");
+                str_ = 4;
+                agi_ = 8;
+                mind_ = 2;
+                faith_ = 0;
+                break;
+            case 3:
+                setClasse("Mago");
+                str_ = 0;
+                agi_ = 4;
+                mind_ = 8;
+                faith_ = 2;
+                break;
+            case 4:
+                setClasse("Sacerdote di Lumen");
+                str_ = 4;
+                agi_ = 4;
+                mind_ = 0;
+                faith_ = 6;
+                break;
+            default:
+                cout << "Scelta non possibile, riprova. \n\n";
+
+        }
+
+        } while (scelta_classe==0 || scelta_classe > 4);
+
+        /*
 
         static random_device rd;
         static mt19937 gen(rd());
@@ -363,6 +444,8 @@ void Player::gestisciInventario()
 
         } while (str_ + agi_ + mind_ + faith_ != 20);
 
+        */
+
         hp_ = 50 + str_ * 2;
         setHpMax(hp_);
         mana_ = 30 + mind_ * 2 + faith_;
@@ -370,8 +453,8 @@ void Player::gestisciInventario()
         
 
         cout << "Benvenuto, " << nome_ << "! Le tue statistiche iniziali sono:\n";
-        cout << "HP: \t\t" << getHp() << "\n";
-        cout << "Mana: \t\t" << getMana() << "\n";
+        cout << "HP: \t\t" << getHpBase() << "\n";
+        cout << "Mana: \t\t" << getManaBase() << "\n";
         cout << "Forza: \t\t" << getStr() << "\n";
         cout << "Agilità: \t" << getAgi() << "\n";
         cout << "Mente: \t\t" << getMind() << "\n";
