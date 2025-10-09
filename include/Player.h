@@ -35,6 +35,7 @@ class Player {
         int agi_;
         int mind_;
         int faith_;
+        int def_;
         string classe_;
 
         Stanza* pos = nullptr; // posizione attuale
@@ -67,9 +68,9 @@ class Player {
 
         // Costruttore
 
-        Player(const string& n, int h, int m, int s, int a, int mi, int f, string cl, Stanza* st) :
+        Player(const string& n, int h, int m, int s, int a, int mi, int f, int d, string cl, Stanza* st) :
             nome_(n), hp_(h), hp_max_(h), mana_(m), mana_max_(m),
-            str_(s), agi_(a), mind_(mi), faith_(f), classe_(cl), pos(st) {}
+            str_(s), agi_(a), mind_(mi), faith_(f), def_(d), classe_(cl), pos(st) {}
 
         Player() : nome_("Eroe"), hp_(100), hp_max_(100), mana_(50), mana_max_(50),
                    str_(10), agi_(10), mind_(10), faith_(10), classe_("Guerriero"), pos(nullptr) {}
@@ -80,26 +81,16 @@ class Player {
 
         string getNome () const { return nome_;}
         int getHp () const;
+        int getHpMax() const { return hp_max_;}
         int getMana () const;
+        int getManaMax() const { return mana_max_;}
         int getStr () const;
         int getAgi () const;
         int getMind () const;
         int getFaith () const;
+        int getDef () const;
         string getClasse () const {return classe_;}
         Stanza* getPos () const { return pos;}
-        int getHpBase() const { return hp_;}
-        int getHpMaxBase() const { return hp_max_;}
-        int getHpMaxVisibile() const  { return hp_max_ + hpBonusEquip();}
-        int getHpVisibile() const { 
-            int maxVis = getHpMaxVisibile();
-            return hp_> maxVis ? maxVis : hp_;
-        }
-        int getManaBase() const { return mana_; }
-        int GetManaBaseMax() const { return mana_max_;}
-        int getManaMaxVisibile() const { return mana_max_ + manaBonusEquip(); }
-        int getManaVisibile() const { 
-            int maxVis = getManaMaxVisibile();
-            return mana_ > maxVis ? maxVis : mana_; }
         bool spendiMana(int costo);
 
         // Metodi setter
@@ -113,6 +104,7 @@ class Player {
         void setAgi (int a) { agi_ = a; }
         void setMind (int m) { mind_ = m; }
         void setFaith (int f) { faith_ = f; }
+        void setDef (int d) { def_ = d;}
         void setClasse (string cl) { classe_ = cl;}
         void setPos (Stanza* s) { pos = s; }
 
@@ -132,11 +124,9 @@ class Player {
         void muovi(Stanza& stanza);
         void attacca(Nemico& n);
         void usaMagia(Nemico& n);
-        void aggiornaStatistiche();
         void generaPersonaggio();
         int hpBonusEquip() const {return sommaBonus(&Oggetto::getBonusHp);}
         int manaBonusEquip()  const { return sommaBonus(&Oggetto::getBonusMana); }
-        void cambioEquip();
 
 
         template<typename F>

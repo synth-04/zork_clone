@@ -3,10 +3,6 @@
 #include "Oggetto.h"
 #include <algorithm>
 #include <limits>
-
-#include "Player.h"
-#include "Stanza.h"
-#include "Oggetto.h"
 #include "Nemico.h"
 
 using namespace std;
@@ -24,12 +20,13 @@ int Player::sommaBonus(F f) const {
 }
 
 
-int Player::getHp() const       { return hp_   + sommaBonus(&Oggetto::getBonusHp); }
-int Player::getMana() const     { return mana_ + sommaBonus(&Oggetto::getBonusMana); }
+int Player::getHp() const       { return hp_;}
+int Player::getMana() const     { return mana_;}
 int Player::getStr() const       { return str_ + sommaBonus(&Oggetto::getBonusStr); }
 int Player::getAgi() const       { return agi_  + sommaBonus(&Oggetto::getBonusAgi); }
 int Player::getMind() const      { return mind_ + sommaBonus(&Oggetto::getBonusMind); }
 int Player::getFaith() const     { return faith_ + sommaBonus(&Oggetto::getBonusFaith); }
+int Player::getDef() const      { return getAgi() + sommaBonus(&Oggetto::getBonusDef);}
 
 
 // Prove
@@ -170,20 +167,18 @@ void Player::subisciDanno(int s)
 
 void Player::curaDanno(int c)
 {
-    // Cura fino al massimo degli hp base
     if (c <= 0) return;
-    int maxVis = getHpMaxVisibile();
-    hp_ += c;             // curi la base
-    if (hp_ > maxVis) hp_ = maxVis;
+    hp_ += c;                 // curi il pool base
+    if (hp_ > hp_max_) hp_ = hp_max_;     // cap al massimo BASE
 }
+
 
 // Cura mana
 
-void Player::curaMana(int cura) {
-    if (cura <= 0) return;
-    int maxVis = getManaMaxVisibile();
-    mana_ += cura;             // curi la base
-    if (mana_ > maxVis) mana_ = maxVis;
+void Player::curaMana(int c) {
+    if (c <= 0) return;
+    mana_ += c;               // curi il pool base
+    if (mana_ > mana_max_) mana_ = mana_max_; // cap al massimo BASE
 }
 
 // Usa mana per magie
@@ -196,27 +191,6 @@ bool Player::spendiMana(int costo) {
 }
 
 // ==Inventario e personaggio==
-
-void Player::cambioEquip() {
-    int maxVis = getManaMaxVisibile();
-    if (mana_ > maxVis) mana_ = maxVis;
-    maxVis = getHpMaxVisibile();
-    if (hp_ > maxVis) hp_ = maxVis;
-}
-
-// Aggiorna statistiche
-    
-void Player::aggiornaStatistiche()
-    {
-
-        getHp();
-        getMana();
-        getStr();
-        getAgi();
-        getMind();
-        getFaith();
-
-    }
 
 void Player::equipaggiaOggetto(Oggetto* o) {
     if (!o) { 
@@ -241,7 +215,6 @@ void Player::equipaggiaOggetto(Oggetto* o) {
     }
     *slot = o;
     std::cout << "Hai equipaggiato: " << o->getNome() << "\n";
-    cambioEquip();
 }
 
 
@@ -280,14 +253,13 @@ void Player::rimuoviOggettoInventario(Oggetto *o)
 void Player::gestisciInventario()
 {
 
-    aggiornaStatistiche();
-
     // Statistiche player
 
     cout << "\nStatistiche di " << getNome() << ":\n";
     cout << "Classe: \t\t" << getClasse() << "\n";
-    cout << "HP: \t\t" << getHpVisibile() << "(" << getHpMaxVisibile() << ")"<< "\n";
-    cout << "Mana: \t\t" << getManaVisibile() << "(" << getManaMaxVisibile() << ")" << "\n";
+    cout << "HP: \t\t" << getHp() << "(" << getHpMax() << ")"<< "\n";
+    cout << "Mana: \t\t" << getMana() << "(" << getManaMax() << ")" << "\n";
+    cout << "Difesa: \t" << getDef() << "\n";
     cout << "Forza: \t\t" << getStr() << "\n";
     cout << "Agilità: \t" << getAgi() << "\n";
     cout << "Mente: \t\t" << getMind() << "\n";
@@ -429,32 +401,18 @@ void Player::gestisciInventario()
 
         } while (scelta_classe==0 || scelta_classe > 4);
 
-        /*
-
-        static random_device rd;
-        static mt19937 gen(rd());
-        uniform_int_distribution<> dist(1, 10);
-
-        do {
-
-        str_ = dist(gen);
-        agi_ = dist(gen);
-        mind_ = dist(gen);
-        faith_ = dist(gen);
-
-        } while (str_ + agi_ + mind_ + faith_ != 20);
-
-        */
-
         hp_ = 50 + str_ * 2;
         setHpMax(hp_);
         mana_ = 30 + mind_ * 2 + faith_;
         setManaMax(mana_);
+        def_ = getAgi();
+        setDef(def_);
         
 
         cout << "Benvenuto, " << nome_ << "! Le tue statistiche iniziali sono:\n";
-        cout << "HP: \t\t" << getHpBase() << "\n";
-        cout << "Mana: \t\t" << getManaBase() << "\n";
+        cout << "HP: \t\t" << getHp() << "\n";
+        cout << "Mana: \t\t" << getMana() << "\n";
+        cout << "Difesa: \t" << getDef() << "\n";
         cout << "Forza: \t\t" << getStr() << "\n";
         cout << "Agilità: \t" << getAgi() << "\n";
         cout << "Mente: \t\t" << getMind() << "\n";

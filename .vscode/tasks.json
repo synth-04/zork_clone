@@ -10,6 +10,7 @@
         "-Wall",
         "-I", "include",
         "src/*.cpp",
+        "src/dungeons/*.cpp",
         "-o", "bin/main.exe"
       ],
       "group": "build",

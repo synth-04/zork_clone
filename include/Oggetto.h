@@ -12,9 +12,9 @@ class Player;
 class Oggetto {
 protected:
     string nome_;
-    string tipo_; // "arma", "armatura", "scudo", "anello", "amuleto", "consumabile"
+    string tipo_; // "arma", "armatura", "scudo", "anello", "amuleto", "pozione"
     string descrizioneStanza_;
-    int bHp_=0, bMana_ = 0, bStr_=0, bAgi_=0, bMind_=0, bFaith_=0;
+    int bHp_=0, bMana_ = 0, bStr_=0, bAgi_=0, bMind_=0, bFaith_=0, bDef_ = 0;
     
 
 public:
@@ -22,9 +22,9 @@ public:
     // Costruttore
 
     Oggetto (const string& n, const string& t, const string& ds,
-            int bh=0, int bm=0, int bs=0, int ba=0, int bmi=0, int bf=0) :
+            int bh=0, int bm=0, int bs=0, int ba=0, int bmi=0, int bf=0, int bd = 0) :
         nome_(n), tipo_(t), descrizioneStanza_(ds),
-        bHp_(bh), bMana_(bm), bStr_(bs), bAgi_(ba), bMind_(bmi), bFaith_(bf) {}
+        bHp_(bh), bMana_(bm), bStr_(bs), bAgi_(ba), bMind_(bmi), bFaith_(bf), bDef_(bd) {}
 
     // Metodi getter
 
@@ -37,6 +37,7 @@ public:
     int getBonusAgi()  const { return bAgi_; }
     int getBonusMind() const { return bMind_; }
     int getBonusFaith()const { return bFaith_; }
+    int getBonusDef() const { return bDef_;}
 
     const string& getDescrizioneStanza() const { return descrizioneStanza_; }
 

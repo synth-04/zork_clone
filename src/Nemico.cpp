@@ -10,7 +10,7 @@ void Nemico::attacca(Player& p) {
 
         if (getTipo() == "fisico") // fisico
 
-        {int bonus_fisico = p.getAgi();
+        {int bonus_fisico = p.getDef();
             p.prova(bonus_fisico, potenza_) ? danno_ = 0 : danno_ = danno_;}
 
         else if (getTipo() == "magico") // magico
