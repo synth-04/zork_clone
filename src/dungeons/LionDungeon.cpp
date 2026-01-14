@@ -97,7 +97,7 @@ DungeonData buildLionDungeon() {
         // ======= Creazione nemici ======= //
         // Nemico(nome, descrizione, hp, tipo, potenza, danno, flag)
 
-        Nemico* drago = new Nemico
+        Nemico* viverna = new Nemico
             ("Viverna", 
             "Un enorme viverna si erge di fronte a te: una creatura dall'aspetto di rettile, con due ali squamate, due possenti arti inferiori e una coda con aculei. La viverna si prepara a renderti il suo prossimo pasto.", 
             40, "fisico", 20, 30);
@@ -147,16 +147,16 @@ DungeonData buildLionDungeon() {
         
         // Aggiungi scontro: stanza->aggiungiScontro(nemico)
 
-        sala_boss->aggiungiScontro(drago);
+        sala_boss->aggiungiScontro(viverna);
 
         // ======= Collegamento stanze ======= //
         // Aggiungi uscita: stanza->aggiungiUscita(stanza_adiacente)
         // collega (stanza a, stanza b)
 
-        dungeon::collega(entrata, sala_spada);
-        dungeon::collega(sala_spada, sala_alchimia);
-        dungeon::collega(sala_spada, sala_ragni);
-        dungeon::collega(sala_spada, sala_boss);
+        collega(entrata, sala_spada);
+        collega(sala_spada, sala_alchimia);
+        collega(sala_spada, sala_ragni);
+        collega(sala_spada, sala_boss);
 
     // wrapping in unique_ptr
 
